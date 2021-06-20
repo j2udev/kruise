@@ -48,7 +48,7 @@ deploy:
 ```
 
 Now you, as the unfortunate soul trying to juggle 2 different projects, can
-simply choose which teams config file to apply to kruise.
+simply choose which team's config file to apply to kruise.
 
 ```zsh
 kruise deploy mongodb kafka --config ~/.team-a-config.yaml
