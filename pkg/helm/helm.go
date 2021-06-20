@@ -2,10 +2,9 @@ package helm
 
 import (
 	"fmt"
+	"github.com/j2udevelopment/kruise/pkg/config"
 	"log"
 	"os/exec"
-
-	"github.com/j2udevelopment/kruise/pkg/config"
 )
 
 // ConstructChart function used to initialize Helm chart configuration with default values

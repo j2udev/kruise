@@ -7,8 +7,12 @@ type Config struct {
 
 // DeployConfig struct used to unmarshal nested yaml kruise configuration
 type DeployConfig struct {
-	Mongodb map[string][]HelmConfig `mapstructure:"mongodb"`
-	Kafka   map[string][]HelmConfig `mapstructure:"kafka"`
+	Jaeger             map[string][]HelmConfig `mapstructure:"jaeger"`
+	Kafka              map[string][]HelmConfig `mapstructure:"kafka"`
+	Mongodb            map[string][]HelmConfig `mapstructure:"mongodb"`
+	Mysql              map[string][]HelmConfig `mapstructure:"mysql"`
+	Postgresql         map[string][]HelmConfig `mapstructure:"postgresql"`
+	PrometheusOperator map[string][]HelmConfig `mapstructure:"prometheus-operator"`
 }
 
 // HelmConfig struct used to unmarshal nested yaml kruise configuration
