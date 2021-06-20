@@ -6,8 +6,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	// "strings"
-	// "sync"
 )
 
 var chartVersion string
@@ -34,46 +32,6 @@ func NewDeployCmd() *cobra.Command {
 			"postgresql",
 			"prometheus-operator",
 		},
-		// Run: func(cmd *cobra.Command, args []string) {
-			// wg := sync.WaitGroup{}
-			// wg.Add(len(args))
-			// for i := 0; i < len(args); i++ {
-				// deployment := strings.ToLower(args[i])
-				// switch {
-				// case deployment == "jaeger":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployJaegerCmd())
-				// 		wg.Done()
-				// 	}()
-				// case deployment == "kafka":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployKafkaCmd())
-				// 		wg.Done()
-				// 	}()
-				// case deployment == "mongodb":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployMongodbCmd())
-				// 		wg.Done()
-				// 	}()
-				// case deployment == "mysql":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployMysqlCmd())
-				// 		wg.Done()
-				// 	}()
-				// case deployment == "postgresql":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployPostgresqlCmd())
-				// 		wg.Done()
-				// 	}()
-				// case deployment == "prometheus-operator":
-				// 	go func() {
-				// 		cmd.AddCommand(NewDeployPrometheusOperatorCmd())
-				// 		wg.Done()
-				// 	}()
-				// }
-			// }
-			// wg.Wait()
-		// },
 	}
 	cmd.AddCommand(
 		NewDeployJaegerCmd(),
@@ -83,6 +41,20 @@ func NewDeployCmd() *cobra.Command {
 		NewDeployPostgresqlCmd(),
 		NewDeployPrometheusOperatorCmd(),
 	)
+	cmd.PersistentFlags().StringVarP(&chartVersion, "version", "v", "", "Override the Helm chart version for the specified deployments")
+	cmd.PersistentFlags().StringVarP(&chartNamespace, "namespace", "n", "", "Override the namespace for the specified deployments")
+	cmd.PersistentFlags().StringVar(&jaegerDeployment.Version, "jaeger-version", "", "Override the Jaeger Helm chart version")
+	cmd.PersistentFlags().StringVar(&jaegerDeployment.Namespace, "jaeger-namespace", "observability", "Override the Jaeger namespace")
+	cmd.PersistentFlags().StringVar(&kafkaDeployment.Version, "kafka-version", "", "Override the Kafka Helm chart version")
+	cmd.PersistentFlags().StringVar(&kafkaDeployment.Namespace, "kafka-namespace", "kafka", "Override the Kafka namespace")
+	cmd.PersistentFlags().StringVar(&mongoDeployment.Version, "mongodb-version", "", "Override the MongoDB Helm chart version")
+	cmd.PersistentFlags().StringVar(&mongoDeployment.Namespace, "mongodb-namespace", "mongodb", "Override the MongoDB namespace")
+	cmd.PersistentFlags().StringVar(&mysqlDeployment.Version, "mysql-version", "", "Override the MySQL Helm chart version")
+	cmd.PersistentFlags().StringVar(&mysqlDeployment.Namespace, "mysql-namespace", "mysql", "Override the MySQL namespace")
+	cmd.PersistentFlags().StringVar(&postgresqlDeployment.Version, "postgresql-version", "", "Override the PostgreSQL Helm chart version")
+	cmd.PersistentFlags().StringVar(&postgresqlDeployment.Namespace, "postgresql-namespace", "postgresql", "Override the PostgreSQL namespace")
+	cmd.PersistentFlags().StringVar(&prometheusOperatorDeployment.Version, "prom-op-version", "", "Override the Prometheus Operator Helm chart version")
+	cmd.PersistentFlags().StringVar(&prometheusOperatorDeployment.Namespace, "prom-op-namespace", "monitoring", "Override the Prometheus Operator namespace")
 	return cmd
 }
 
@@ -91,7 +63,7 @@ func NewDeployJaegerCmd() *cobra.Command{
 		Use:   "jaeger",
 		Short: "Deploy Jaeger to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.jaeger"), &jaegerDeployment)
 				helm.Install(jaegerDeployment)
 			}()
@@ -105,7 +77,7 @@ func NewDeployKafkaCmd() *cobra.Command{
 		Use:   "kafka",
 		Short: "Deploy Kafka to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.kafka"), &kafkaDeployment)
 				helm.Install(kafkaDeployment)
 			}()
@@ -119,7 +91,7 @@ func NewDeployMongodbCmd() *cobra.Command{
 		Use:   "mongodb",
 		Short: "Deploy MongoDB to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.mongodb"), &mongoDeployment)
 				helm.Install(mongoDeployment)
 			}()
@@ -133,7 +105,7 @@ func NewDeployMysqlCmd() *cobra.Command{
 		Use:   "mysql",
 		Short: "Deploy MySQL to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.mysql"), &mysqlDeployment)
 				helm.Install(mysqlDeployment)
 			}()
@@ -147,14 +119,12 @@ func NewDeployPostgresqlCmd() *cobra.Command{
 		Use:   "postgresql",
 		Short: "Deploy PostgreSQL to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.postgresql"), &postgresqlDeployment)
 				helm.Install(postgresqlDeployment)
 			}()
 		},
 	}
-	cmd.Flags().StringVar(&postgresqlDeployment.Version, "postgresql-version", "", "Override the PostgreSQL Helm chart version")
-	cmd.Flags().StringVar(&postgresqlDeployment.Namespace, "postgresql-namespace", "postgresql", "Override the PostgreSQL namespace")
 	return cmd
 }
 
@@ -163,30 +133,11 @@ func NewDeployPrometheusOperatorCmd() *cobra.Command{
 		Use:   "prometheus-operator",
 		Short: "Deploy Prometheus Operator to your cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() {
+			func() {
 				mapstructure.Decode(viper.GetStringMap("deploy.prometheus-operator"), &prometheusOperatorDeployment)
 				helm.Install(prometheusOperatorDeployment)
 			}()
 		},
 	}
-	cmd.Flags().StringVar(&prometheusOperatorDeployment.Namespace, "prom-op-namespace", "monitoring", "Override the Prometheus Operator namespace")
-  cmd.Flags().StringVar(&prometheusOperatorDeployment.Version, "prom-op-version", "", "Override the Prometheus Operator Helm chart version")
 	return cmd
-}
-
-func init() {
-	// deployCmd.PersistentFlags().StringVarP(&chartVersion, "version", "v", "", "Override the Helm chart version for the specified deployments")
-	// deployCmd.PersistentFlags().StringVarP(&chartNamespace, "namespace", "n", "", "Override the namespace for the specified deployments")
-	// deployCmd.PersistentFlags().StringVar(&jaegerDeployment.Version, "jaeger-version", "", "Override the Jaeger Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&jaegerDeployment.Namespace, "jaeger-namespace", "observability", "Override the Jaeger namespace")
-	// deployCmd.PersistentFlags().StringVar(&kafkaDeployment.Version, "kafka-version", "", "Override the Kafka Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&kafkaDeployment.Namespace, "kafka-namespace", "kafka", "Override the Kafka namespace")
-	// deployCmd.PersistentFlags().StringVar(&mongoDeployment.Version, "mongodb-version", "", "Override the MongoDB Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&mongoDeployment.Namespace, "mongodb-namespace", "mongodb", "Override the MongoDB namespace")
-	// deployCmd.PersistentFlags().StringVar(&mysqlDeployment.Version, "mysql-version", "", "Override the MySQL Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&mysqlDeployment.Namespace, "mysql-namespace", "mysql", "Override the MySQL namespace")
-	// deployCmd.PersistentFlags().StringVar(&postgresqlDeployment.Version, "postgresql-version", "", "Override the PostgreSQL Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&postgresqlDeployment.Namespace, "postgresql-namespace", "postgresql", "Override the PostgreSQL namespace")
-	// deployCmd.PersistentFlags().StringVar(&prometheusOperatorDeployment.Version, "prom-op-version", "", "Override the Prometheus Operator Helm chart version")
-	// deployCmd.PersistentFlags().StringVar(&prometheusOperatorDeployment.Namespace, "prom-op-namespace", "monitoring", "Override the Prometheus Operator namespace")
 }
