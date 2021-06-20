@@ -22,7 +22,7 @@ type Config struct {
 }
 
 type DeployConfig struct {
-	Mongdb map[string][]HelmConfig `mapstructure:"mongodb"`
+	Mongodb map[string][]HelmConfig `mapstructure:"mongodb"`
 	Kafka  map[string][]HelmConfig `mapstructure:"kafka"`
 }
 
