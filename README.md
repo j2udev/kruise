@@ -1,5 +1,7 @@
 # Kruise(ctl)
 
+[![GoReportCard](https://goreportcard.com/badge/github.com/j2udevelopment/kruise)](https://goreportcard.com/report/github.com/j2udevelopment/kruise)
+
 Kruise is a CLI that aims to streamline the local development experience. Modern
 software development can involve an overwhelming number of tools and sometimes
 it's just difficult to keep up with it all. You can think of kruise as a CLI
