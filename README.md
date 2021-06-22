@@ -67,5 +67,5 @@ kruise deploy mongodb kafka --config ~/.team-b-config.yaml
 Assuming your `$GOROOT`, `$GOBIN`, and `$GOPATH` are set up, just:
 
 ```zsh
-go install
+make install
 ```
