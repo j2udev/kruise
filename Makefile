@@ -1,4 +1,4 @@
-all: update-deps vet fmt
+all: update-deps vet fmt install
 
 fmt:
 	gofmt -w -s .
@@ -11,3 +11,6 @@ vet:
 
 update-deps:
 	go mod tidy
+
+install:
+	go install ./cmd/kruise/main.go
