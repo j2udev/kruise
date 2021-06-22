@@ -2,13 +2,14 @@ package helm
 
 import (
 	"fmt"
-	"github.com/j2udevelopment/kruise/pkg/config"
 	"log"
 	"os/exec"
+
+	c "github.com/j2udevelopment/kruise/pkg/config"
 )
 
 // ConstructChart function used to initialize Helm chart configuration with default values
-func ConstructChart(helmConfig *config.HelmConfig) {
+func ConstructChart(helmConfig *c.HelmConfig) {
 	if helmConfig.ReleaseName == "" {
 		log.Fatal("You must specify a Helm release name")
 	}
@@ -33,7 +34,7 @@ func ConstructChart(helmConfig *config.HelmConfig) {
 }
 
 // Install function used to install Helm charts in an abstract way
-func Install(helmConfig config.HelmConfig) {
+func Install(helmConfig c.HelmConfig) {
 	helmCheck := exec.Command("command", "-v", "helm")
 	if err := helmCheck.Run(); err != nil {
 		log.Fatal("Helm does not appear to be installed")
@@ -56,7 +57,7 @@ func Install(helmConfig config.HelmConfig) {
 }
 
 // Uninstall function used to uninstall Helm charts in an abstract way
-func Uninstall(helmConfig config.HelmConfig) {
+func Uninstall(helmConfig c.HelmConfig) {
 	helmCheck := exec.Command("command", "-v", "helm")
 	if err := helmCheck.Run(); err != nil {
 		log.Fatal("Helm does not appear to be installed")
