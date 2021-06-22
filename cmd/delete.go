@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"strings"
 	"sync"
 
 	h "github.com/j2udevelopment/kruise/pkg/helm"
 	u "github.com/j2udevelopment/kruise/pkg/utils"
+	t "github.com/j2udevelopment/kruise/tpl"
 	"github.com/spf13/cobra"
 )
 
@@ -80,48 +80,18 @@ var deleteCmd = &cobra.Command{
 				}()
 			}
 		}
-
-		for i := 0; i < len(args); i++ {
-			deployment := strings.ToLower(args[i])
-			switch {
-			case deployment == "jaeger":
-				go func() {
-					h.Uninstall(jaegerDeployment)
-					wg.Done()
-				}()
-			case deployment == "kafka":
-				go func() {
-					h.Uninstall(kafkaDeployment)
-					wg.Done()
-				}()
-			case deployment == "mongodb":
-				go func() {
-					h.Uninstall(mongodbDeployment)
-					wg.Done()
-				}()
-			case deployment == "mysql":
-				go func() {
-					h.Uninstall(mysqlDeployment)
-					wg.Done()
-				}()
-			case deployment == "postgresql":
-				go func() {
-					h.Uninstall(postgresqlDeployment)
-					wg.Done()
-				}()
-			case deployment == "prometheus-operator":
-				go func() {
-					h.Uninstall(prometheusOperatorDeployment)
-					wg.Done()
-				}()
-			}
-		}
 		wg.Wait()
 	},
 }
 
 func init() {
+	var wrapper = u.CommandWrapper{
+		Cmd:  deleteCmd,
+		Opts: deleteOpts,
+	}
 	rootCmd.AddCommand(deleteCmd)
+	deleteCmd.SetUsageTemplate(t.UsageTemplate())
+	deleteCmd.SetUsageFunc(t.UsageFunc(wrapper))
 	deleteCmd.PersistentFlags().StringVarP(&chartNamespace, "namespace", "n", "", "Override the namespace for the specified deployments")
 	deleteCmd.PersistentFlags().StringVar(&jaegerDeployment.Namespace, "jaeger-namespace", "observability", "Override the Jaeger namespace")
 	deleteCmd.PersistentFlags().StringVar(&kafkaDeployment.Namespace, "kafka-namespace", "kafka", "Override the Kafka namespace")
