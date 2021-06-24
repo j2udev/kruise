@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +31,8 @@ func Check(err error) {
 	}
 }
 
+// ExecuteCommand is used as a repeatable means of calling CLI commands wrapped
+// by kruise
 func ExecuteCommand(shallowDryRun bool, name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	if shallowDryRun {
@@ -46,6 +49,7 @@ func ExecuteCommand(shallowDryRun bool, name string, args ...string) error {
 		cmdOut, _ := io.ReadAll(stdout)
 		if len(cmdErr) > 0 {
 			log.Printf("%s", cmdErr)
+			return errors.New(string(cmdErr))
 		}
 		fmt.Printf("%s", cmdOut)
 		cmd.Wait()

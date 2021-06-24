@@ -8,7 +8,7 @@ import (
 	u "github.com/j2udevelopment/kruise/pkg/utils"
 )
 
-// ConstructChart function used to initialize Helm chart configuration with default values
+// ConstructChart is used to construct a default Helm chart from configuration
 func ConstructChart(helmConfig *c.HelmConfig) {
 	if helmConfig.ReleaseName == "" {
 		log.Fatal("You must specify a Helm release name")
@@ -34,6 +34,7 @@ func ConstructChart(helmConfig *c.HelmConfig) {
 	}
 }
 
+// CheckHelm is used to verify that Helm is installed
 func CheckHelm() {
 	helmCheck := exec.Command("command", "-v", "helm")
 	if err := helmCheck.Run(); err != nil {
@@ -41,13 +42,15 @@ func CheckHelm() {
 	}
 }
 
+// ConstructAndCheck is used to verify that Helm is installed and consruct a
+// default Helm chart from configuration
 func ConstructAndCheck(helmConfig *c.HelmConfig) {
 	CheckHelm()
 	ConstructChart(helmConfig)
 }
 
-// Install function used to install Helm charts in an abstract way
-func Install(shallowDryRun bool, helmConfig *c.HelmConfig) {
+// Install is used to install Helm charts in an abstract way
+func Install(shallowDryRun bool, helmConfig *c.HelmConfig) error {
 	ConstructAndCheck(helmConfig)
 	for _, val := range helmConfig.Values {
 		helmConfig.Args = append(helmConfig.Args, "-f", val)
@@ -55,11 +58,11 @@ func Install(shallowDryRun bool, helmConfig *c.HelmConfig) {
 	for _, val := range helmConfig.ExtraArgs {
 		helmConfig.Args = append(helmConfig.Args, val)
 	}
-	u.ExecuteCommand(shallowDryRun, helmConfig.Args[0], helmConfig.Args[1:]...)
+	return u.ExecuteCommand(shallowDryRun, helmConfig.Args[0], helmConfig.Args[1:]...)
 }
 
-// Uninstall function used to uninstall Helm charts in an abstract way
-func Uninstall(shallowDryRun bool, helmConfig *c.HelmConfig) {
+// Uninstall is used to uninstall Helm charts in an abstract way
+func Uninstall(shallowDryRun bool, helmConfig *c.HelmConfig) error {
 	ConstructAndCheck(helmConfig)
 	deleteArgs := []string{
 		"helm",
@@ -71,5 +74,5 @@ func Uninstall(shallowDryRun bool, helmConfig *c.HelmConfig) {
 	for _, val := range helmConfig.ExtraArgs {
 		deleteArgs = append(helmConfig.Args, val)
 	}
-	u.ExecuteCommand(shallowDryRun, deleteArgs[0], deleteArgs[1:]...)
+	return u.ExecuteCommand(shallowDryRun, deleteArgs[0], deleteArgs[1:]...)
 }
