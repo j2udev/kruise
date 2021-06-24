@@ -1,9 +1,9 @@
 package cli
 
 import (
-	"fmt"
 	"sync"
 
+	"github.com/fatih/color"
 	c "github.com/j2udevelopment/kruise/pkg/config"
 	h "github.com/j2udevelopment/kruise/pkg/helm"
 	u "github.com/j2udevelopment/kruise/pkg/utils"
@@ -24,7 +24,6 @@ var prometheusOperatorDeployment = c.HelmConfig{ReleaseName: "prometheus-operato
 
 // NewDeployOpts returns options for the deploy command
 func NewDeployOpts() []u.Option {
-	fmt.Println("did it work")
 	opts := []u.Option{
 		{
 			Arguments:   "jaeger",
@@ -56,6 +55,7 @@ func NewDeployOpts() []u.Option {
 
 // NewDeployCmd represents the deploy command
 func NewDeployCmd(opts []u.Option) *cobra.Command {
+	shallowDryRun := false
 	cmd := &cobra.Command{
 		Use:       "deploy",
 		Short:     "Deploy the specified options to your Kubernetes cluster",
@@ -70,37 +70,55 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 				case u.Contains(validArgsMap["jaeger"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.jaeger"), &jaegerDeployment)
-						h.Install(jaegerDeployment)
+						color.Green("Attempting to deploy Jaeger...")
+						if err := h.Install(shallowDryRun, &jaegerDeployment); err != nil {
+							color.Red("Failed to deploy Jaeger")
+						}
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["kafka"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.kafka"), &kafkaDeployment)
-						h.Install(kafkaDeployment)
+						color.Green("Attempting to deploy Kafka...")
+						if err := h.Install(shallowDryRun, &kafkaDeployment); err != nil {
+							color.Red("Failed to deploy Kafka")
+						}
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mongodb"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.mongodb"), &mongodbDeployment)
-						h.Install(mongodbDeployment)
+						color.Green("Attempting to deploy MongoDB...")
+						if err := h.Install(shallowDryRun, &mongodbDeployment); err != nil {
+							color.Red("Failed to deploy MongoDB")
+						}
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mysql"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.mysql"), &mysqlDeployment)
-						h.Install(mysqlDeployment)
+						color.Green("Attempting to deploy MySQL...")
+						if err := h.Install(shallowDryRun, &mysqlDeployment); err != nil {
+							color.Red("Failed to deploy MySQL")
+						}
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["postgresql"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.postgresql"), &postgresqlDeployment)
-						h.Install(postgresqlDeployment)
+						color.Green("Attempting to deploy PostgreSQL...")
+						if err := h.Install(shallowDryRun, &postgresqlDeployment); err != nil {
+							color.Red("Failed to deploy PostgreSQL")
+						}
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["prometheus-operator"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.prometheus-operator"), &prometheusOperatorDeployment)
-						h.Install(prometheusOperatorDeployment)
+						color.Green("Attempting to deploy Prometheus Operator...")
+						if err := h.Install(shallowDryRun, &prometheusOperatorDeployment); err != nil {
+							color.Red("Failed to deploy Prometheus Operator")
+						}
 						wg.Done()
 					}()
 				}

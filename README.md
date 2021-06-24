@@ -1,6 +1,7 @@
 # Kruise(ctl)
 
 [![GoReportCard](https://goreportcard.com/badge/github.com/j2udevelopment/kruise)](https://goreportcard.com/report/github.com/j2udevelopment/kruise)
+[![Go Reference](https://pkg.go.dev/badge/github.com/j2udevelopment/kruise.svg)](https://pkg.go.dev/github.com/j2udevelopment/kruise)
 
 Kruise is a CLI that aims to streamline the local development experience. Modern
 software development can involve an overwhelming number of tools and sometimes

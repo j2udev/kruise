@@ -13,4 +13,4 @@ update-deps:
 	go mod tidy
 
 install:
-	go install ./cmd/kruise/main.go
+	cd cmd/kruise && go install && cd -
