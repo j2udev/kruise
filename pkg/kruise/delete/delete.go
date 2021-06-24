@@ -1,4 +1,4 @@
-package cli
+package delete
 
 import (
 	"sync"
