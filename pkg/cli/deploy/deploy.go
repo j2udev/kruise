@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"sync"
 
 	c "github.com/j2udevelopment/kruise/pkg/config"
@@ -24,7 +23,6 @@ var prometheusOperatorDeployment = c.HelmConfig{ReleaseName: "prometheus-operato
 
 // NewDeployOpts returns options for the deploy command
 func NewDeployOpts() []u.Option {
-	fmt.Println("did it work")
 	opts := []u.Option{
 		{
 			Arguments:   "jaeger",
@@ -56,6 +54,7 @@ func NewDeployOpts() []u.Option {
 
 // NewDeployCmd represents the deploy command
 func NewDeployCmd(opts []u.Option) *cobra.Command {
+	shallowDryRun := false
 	cmd := &cobra.Command{
 		Use:       "deploy",
 		Short:     "Deploy the specified options to your Kubernetes cluster",
@@ -70,37 +69,37 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 				case u.Contains(validArgsMap["jaeger"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.jaeger"), &jaegerDeployment)
-						h.Install(jaegerDeployment)
+						h.Install(shallowDryRun, &jaegerDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["kafka"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.kafka"), &kafkaDeployment)
-						h.Install(kafkaDeployment)
+						h.Install(shallowDryRun, &kafkaDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mongodb"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.mongodb"), &mongodbDeployment)
-						h.Install(mongodbDeployment)
+						h.Install(shallowDryRun, &mongodbDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mysql"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.mysql"), &mysqlDeployment)
-						h.Install(mysqlDeployment)
+						h.Install(shallowDryRun, &mysqlDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["postgresql"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.postgresql"), &postgresqlDeployment)
-						h.Install(postgresqlDeployment)
+						h.Install(shallowDryRun, &postgresqlDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["prometheus-operator"], arg):
 					go func() {
 						mapstructure.Decode(viper.GetStringMap("deploy.prometheus-operator"), &prometheusOperatorDeployment)
-						h.Install(prometheusOperatorDeployment)
+						h.Install(shallowDryRun, &prometheusOperatorDeployment)
 						wg.Done()
 					}()
 				}

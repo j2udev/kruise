@@ -51,6 +51,7 @@ func NewDeleteOpts() []u.Option {
 
 // NewDeleteCmd represents the deploy command
 func NewDeleteCmd(opts []u.Option) *cobra.Command {
+	shallowDryRun := false
 	cmd := &cobra.Command{
 		Use:       "delete",
 		Short:     "Delete the specified options from your Kubernetes cluster",
@@ -64,32 +65,32 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 				switch {
 				case u.Contains(validArgsMap["jaeger"], arg):
 					go func() {
-						h.Uninstall(jaegerDeployment)
+						h.Uninstall(shallowDryRun, &jaegerDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["kafka"], arg):
 					go func() {
-						h.Uninstall(kafkaDeployment)
+						h.Uninstall(shallowDryRun, &kafkaDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mongodb"], arg):
 					go func() {
-						h.Uninstall(mongodbDeployment)
+						h.Uninstall(shallowDryRun, &mongodbDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["mysql"], arg):
 					go func() {
-						h.Uninstall(mysqlDeployment)
+						h.Uninstall(shallowDryRun, &mysqlDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["postgresql"], arg):
 					go func() {
-						h.Uninstall(postgresqlDeployment)
+						h.Uninstall(shallowDryRun, &postgresqlDeployment)
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["prometheus-operator"], arg):
 					go func() {
-						h.Uninstall(prometheusOperatorDeployment)
+						h.Uninstall(shallowDryRun, &prometheusOperatorDeployment)
 						wg.Done()
 					}()
 				}

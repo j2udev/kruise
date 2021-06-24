@@ -1,11 +1,11 @@
 package helm
 
 import (
-	"fmt"
 	"log"
 	"os/exec"
 
 	c "github.com/j2udevelopment/kruise/pkg/config"
+	u "github.com/j2udevelopment/kruise/pkg/utils"
 )
 
 // ConstructChart function used to initialize Helm chart configuration with default values
@@ -21,6 +21,7 @@ func ConstructChart(helmConfig *c.HelmConfig) {
 	}
 	if len(helmConfig.Args) == 0 {
 		helmConfig.Args = []string{
+			"helm",
 			"upgrade", "-i",
 			helmConfig.ReleaseName,
 			helmConfig.ChartPath,
@@ -33,37 +34,35 @@ func ConstructChart(helmConfig *c.HelmConfig) {
 	}
 }
 
-// Install function used to install Helm charts in an abstract way
-func Install(helmConfig c.HelmConfig) {
+func CheckHelm() {
 	helmCheck := exec.Command("command", "-v", "helm")
 	if err := helmCheck.Run(); err != nil {
-		log.Fatal("Helm does not appear to be installed")
+		log.Fatalf("%s", "Helm does not appear to be installed")
 	}
-	ConstructChart(&helmConfig)
+}
+
+func ConstructAndCheck(helmConfig *c.HelmConfig) {
+	CheckHelm()
+	ConstructChart(helmConfig)
+}
+
+// Install function used to install Helm charts in an abstract way
+func Install(shallowDryRun bool, helmConfig *c.HelmConfig) {
+	ConstructAndCheck(helmConfig)
 	for _, val := range helmConfig.Values {
 		helmConfig.Args = append(helmConfig.Args, "-f", val)
 	}
 	for _, val := range helmConfig.ExtraArgs {
 		helmConfig.Args = append(helmConfig.Args, val)
 	}
-	cmd := exec.Command("helm", helmConfig.Args...)
-	fmt.Println(cmd)
-	fmt.Println("Attempting to deploy " + helmConfig.ChartPath)
-	if err := cmd.Run(); err != nil {
-		log.Fatal("Something went wrong, is Kubernetes running?")
-	} else {
-		fmt.Println("Successfully deployed " + helmConfig.ChartPath)
-	}
+	u.ExecuteCommand(shallowDryRun, helmConfig.Args[0], helmConfig.Args[1:]...)
 }
 
 // Uninstall function used to uninstall Helm charts in an abstract way
-func Uninstall(helmConfig c.HelmConfig) {
-	helmCheck := exec.Command("command", "-v", "helm")
-	if err := helmCheck.Run(); err != nil {
-		log.Fatal("Helm does not appear to be installed")
-	}
-	ConstructChart(&helmConfig)
+func Uninstall(shallowDryRun bool, helmConfig *c.HelmConfig) {
+	ConstructAndCheck(helmConfig)
 	deleteArgs := []string{
+		"helm",
 		"uninstall",
 		helmConfig.ReleaseName,
 		"--namespace",
@@ -72,12 +71,5 @@ func Uninstall(helmConfig c.HelmConfig) {
 	for _, val := range helmConfig.ExtraArgs {
 		deleteArgs = append(helmConfig.Args, val)
 	}
-	cmd := exec.Command("helm", deleteArgs...)
-	fmt.Println(cmd)
-	fmt.Println("Attempting to delete " + helmConfig.ChartPath)
-	if err := cmd.Run(); err != nil {
-		log.Fatal("Something went wrong, is Kubernetes running?")
-	} else {
-		fmt.Println("Successfully deleted " + helmConfig.ChartPath)
-	}
+	u.ExecuteCommand(shallowDryRun, deleteArgs[0], deleteArgs[1:]...)
 }
