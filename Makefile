@@ -14,3 +14,6 @@ update-deps:
 
 install:
 	cd cmd/kruise && go install && cd -
+
+test:
+	go test pkg/**/*_test.go -v
