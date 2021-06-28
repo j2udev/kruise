@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -77,4 +78,9 @@ func InitCustomConfig(configFile ConfigFile) {
 	if err != nil {
 		log.Fatalf("Unable to decode config into struct, %v", err)
 	}
+}
+
+// Decode is used to destructure config maps into structs
+func Decode(key string, data interface{}) error {
+	return mapstructure.Decode(viper.GetStringMap(key), data)
 }
