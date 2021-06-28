@@ -8,9 +8,7 @@ import (
 	h "github.com/j2udevelopment/kruise/pkg/helm"
 	u "github.com/j2udevelopment/kruise/pkg/utils"
 	t "github.com/j2udevelopment/kruise/tpl"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var chartNamespace string
@@ -68,7 +66,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 				switch {
 				case u.Contains(validArgsMap["jaeger"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.jaeger"), &jaegerDeployment)
+						c.Decode("deploy.jaeger", &jaegerDeployment)
 						color.Green("Attempting to delete Jaeger...")
 						if err := h.Uninstall(shallowDryRun, &jaegerDeployment); err != nil {
 							color.Red("Failed to delete Jaeger")
@@ -77,7 +75,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["kafka"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.kafka"), &kafkaDeployment)
+						c.Decode("deploy.kafka", &kafkaDeployment)
 						color.Green("Attempting to delete Kafka...")
 						if err := h.Uninstall(shallowDryRun, &kafkaDeployment); err != nil {
 							color.Red("Failed to delete Kafka")
@@ -86,7 +84,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["mongodb"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.mongodb"), &mongodbDeployment)
+						c.Decode("deploy.mongodb", &mongodbDeployment)
 						color.Green("Attempting to delete MongoDB...")
 						if err := h.Uninstall(shallowDryRun, &mongodbDeployment); err != nil {
 							color.Red("Failed to delete MongoDB")
@@ -95,7 +93,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["mysql"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.mysql"), &mysqlDeployment)
+						c.Decode("deploy.mysql", &mysqlDeployment)
 						color.Green("Attempting to delete MySQL...")
 						if err := h.Uninstall(shallowDryRun, &mysqlDeployment); err != nil {
 							color.Red("Failed to delete MySQL")
@@ -104,7 +102,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["postgresql"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.postgresql"), &postgresqlDeployment)
+						c.Decode("deploy.postgresql", &postgresqlDeployment)
 						color.Green("Attempting to delete PostgreSQL...")
 						if err := h.Uninstall(shallowDryRun, &postgresqlDeployment); err != nil {
 							color.Red("Failed to delete PostgreSQL")
@@ -113,7 +111,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["prometheus-operator"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.prometheus-operator"), &prometheusOperatorDeployment)
+						c.Decode("deploy.prometheus-operator", &prometheusOperatorDeployment)
 						color.Green("Attempting to delete Prometheus Operator...")
 						if err := h.Uninstall(shallowDryRun, &prometheusOperatorDeployment); err != nil {
 							color.Red("Failed to delete Prometheus Operator")
