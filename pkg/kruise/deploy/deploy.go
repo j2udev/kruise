@@ -8,9 +8,7 @@ import (
 	h "github.com/j2udevelopment/kruise/pkg/helm"
 	u "github.com/j2udevelopment/kruise/pkg/utils"
 	t "github.com/j2udevelopment/kruise/tpl"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var chartVersion string
@@ -69,7 +67,7 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 				switch {
 				case u.Contains(validArgsMap["jaeger"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.jaeger"), &jaegerDeployment)
+						c.Decode("deploy.jaeger", &jaegerDeployment)
 						color.Green("Attempting to deploy Jaeger...")
 						if err := h.Install(shallowDryRun, &jaegerDeployment); err != nil {
 							color.Red("Failed to deploy Jaeger")
@@ -78,7 +76,7 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["kafka"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.kafka"), &kafkaDeployment)
+						c.Decode("deploy.kafka", &kafkaDeployment)
 						color.Green("Attempting to deploy Kafka...")
 						if err := h.Install(shallowDryRun, &kafkaDeployment); err != nil {
 							color.Red("Failed to deploy Kafka")
@@ -87,7 +85,7 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["mongodb"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.mongodb"), &mongodbDeployment)
+						c.Decode("deploy.mongodb", &mongodbDeployment)
 						color.Green("Attempting to deploy MongoDB...")
 						if err := h.Install(shallowDryRun, &mongodbDeployment); err != nil {
 							color.Red("Failed to deploy MongoDB")
@@ -96,7 +94,7 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["mysql"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.mysql"), &mysqlDeployment)
+						c.Decode("deploy.mysql", &mysqlDeployment)
 						color.Green("Attempting to deploy MySQL...")
 						if err := h.Install(shallowDryRun, &mysqlDeployment); err != nil {
 							color.Red("Failed to deploy MySQL")
@@ -105,7 +103,7 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 					}()
 				case u.Contains(validArgsMap["postgresql"], arg):
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.postgresql"), &postgresqlDeployment)
+						c.Decode("deploy.postgresql", &postgresqlDeployment)
 						color.Green("Attempting to deploy PostgreSQL...")
 						if err := h.Install(shallowDryRun, &postgresqlDeployment); err != nil {
 							color.Red("Failed to deploy PostgreSQL")
@@ -113,8 +111,10 @@ func NewDeployCmd(opts []u.Option) *cobra.Command {
 						wg.Done()
 					}()
 				case u.Contains(validArgsMap["prometheus-operator"], arg):
+					// TODO: Helm installing a chart that produces warnings triggers a
+					// false positive failure, fix this
 					go func() {
-						mapstructure.Decode(viper.GetStringMap("deploy.prometheus-operator"), &prometheusOperatorDeployment)
+						c.Decode("deploy.prometheus-operator", &prometheusOperatorDeployment)
 						color.Green("Attempting to deploy Prometheus Operator...")
 						if err := h.Install(shallowDryRun, &prometheusOperatorDeployment); err != nil {
 							color.Red("Failed to deploy Prometheus Operator")
