@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +16,7 @@ func TestUnmarshalDeployConfig(t *testing.T) {
 	assert.Equal(t, "test/jaeger", helmCfg.ChartPath, "The chartPath was not unmarshalled correctly")
 	assert.Equal(t, "test", helmCfg.Namespace, "The namespace was not unmarshalled correctly")
 	assert.Equal(t, "0.39.5", helmCfg.Version, "The version was not unmarshalled correctly")
-	assert.Equal(t, []string{"values/jaeger-values.yaml"}, helmCfg.Values, "The values were not unmarshalled correctly")
+	assert.Equal(t, []string{"values/values.yaml"}, helmCfg.Values, "The values were not unmarshalled correctly")
 	assert.Equal(t, []string(nil), helmCfg.Args, "The args were not unmarshalled correctly")
 	assert.Equal(t, []string{"--wait", "--dry-run"}, helmCfg.ExtraArgs, "The extraArgs were not unmarshalled correctly")
 }
@@ -26,14 +25,28 @@ func TestUnmarshalDynamicDeployConfig(t *testing.T) {
 	cfgFile := ConfigFile{"../../test/deploy", "yaml", "dynamic-test-config", ""}
 	var cfg DynamicConfig
 	var helmCfg []DynamicHelmConfig
+	testCfgA := DynamicHelmConfig{
+		OptionName:        "jaeger",
+		OptionDescription: "test jaeger description",
+		ReleaseName:       "jaeger",
+		ChartPath:         "test/jaeger",
+		Namespace:         "jaeger",
+		Version:           "7.7.7",
+		Values:            []string{"values/values.yaml"},
+		ExtraArgs:         []string{"--wait", "--dry-run"},
+	}
+	testCfgB := DynamicHelmConfig{
+		OptionName:        "kafka",
+		OptionDescription: "test kafka description",
+		ReleaseName:       "kafka",
+		ChartPath:         "test/kafka",
+		Namespace:         "kafka",
+		Version:           "8.8.8",
+		Values:            []string{"values/values.yaml"},
+		ExtraArgs:         []string{"--dry-run"},
+	}
 	InitCustomConfig(cfgFile, cfg)
 	Decode("deploy.helm", &helmCfg)
-	for _, config := range helmCfg {
-		fmt.Println(config.OptionName)
-		fmt.Println(config.OptionDescription)
-		fmt.Println(config.ReleaseName)
-		fmt.Println(config.ChartPath)
-		fmt.Println(config.Namespace)
-		fmt.Println(config.Version)
-	}
+	assert.Equal(t, testCfgA, helmCfg[0], "Test configuration did not match unmarshalled/decoded configuration")
+	assert.Equal(t, testCfgB, helmCfg[1], "Test configuration did not match unmarshalled/decoded configuration")
 }

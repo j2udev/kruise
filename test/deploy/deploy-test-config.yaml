@@ -5,7 +5,7 @@ deploy:
     namespace: test
     version: 0.39.5
     values:
-      - values/jaeger-values.yaml
+      - values/values.yaml
     extraArgs:
       - "--wait"
       - "--dry-run"
