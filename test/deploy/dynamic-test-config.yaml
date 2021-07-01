@@ -1,0 +1,23 @@
+deploy:
+  helm:
+    - optionName: jaeger
+      optionDescription: test jaeger description
+      releaseName: jaeger
+      chartPath: test/jaeger
+      namespace: jaeger
+      version: 7.7.7
+      values:
+        - values/jaeger-values.yaml
+      extraArgs:
+        - "--wait"
+        - "--dry-run"
+    - optionName: kafka
+      optionDescription: test kafka description
+      releaseName: kafka
+      chartPath: test/kafka
+      namespace: kafka
+      version: 8.8.8
+      values:
+        - values/jaeger-values.yaml
+      extraArgs:
+        - "--dry-run"

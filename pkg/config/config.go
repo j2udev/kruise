@@ -19,6 +19,26 @@ type ConfigFile struct {
 	Override  string
 }
 
+type DynamicConfig struct {
+	Deploy map[string][]DynamicDeployConfig `mapstructure:"deploy"`
+}
+
+type DynamicDeployConfig struct {
+	Helm map[string][]DynamicHelmConfig `mapstructure:"helm"`
+}
+
+type DynamicHelmConfig struct {
+	OptionName        string
+	OptionDescription string
+	ReleaseName       string
+	ChartPath         string
+	Namespace         string
+	Version           string
+	Values            []string
+	Args              []string
+	ExtraArgs         []string
+}
+
 // Config struct used to unmarshal yaml kruise configuration
 type Config struct {
 	Deploy map[string][]DeployConfig `mapstructure:"deploy"`
@@ -45,8 +65,6 @@ type HelmConfig struct {
 	ExtraArgs   []string
 }
 
-var config Config
-
 // InitConfig initializes default config
 func InitConfig() {
 	home, err := homedir.Dir()
@@ -56,11 +74,12 @@ func InitConfig() {
 		Extension: "yaml",
 		FileName:  ".kruise",
 	}
-	InitCustomConfig(configFile)
+	var cfg DynamicConfig
+	InitCustomConfig(configFile, cfg)
 }
 
 // InitCustomConfig reads in a ConfigFile that is passed to viper
-func InitCustomConfig(configFile ConfigFile) {
+func InitCustomConfig(configFile ConfigFile, data interface{}) {
 	if configFile.Override != "" {
 		// Use config file from override
 		viper.SetConfigFile(configFile.Override)
@@ -74,7 +93,7 @@ func InitCustomConfig(configFile ConfigFile) {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
-	err := viper.Unmarshal(&config)
+	err := viper.Unmarshal(&data)
 	if err != nil {
 		log.Fatalf("Unable to decode config into struct, %v", err)
 	}
@@ -82,5 +101,5 @@ func InitCustomConfig(configFile ConfigFile) {
 
 // Decode is used to destructure config maps into structs
 func Decode(key string, data interface{}) error {
-	return mapstructure.Decode(viper.GetStringMap(key), data)
+	return mapstructure.Decode(viper.Get(key), data)
 }
