@@ -26,24 +26,12 @@ func TestUnmarshalDynamicDeployConfig(t *testing.T) {
 	var cfg DynamicConfig
 	var helmCfg []DynamicHelmConfig
 	testCfgA := DynamicHelmConfig{
-		OptionName:        "jaeger",
-		OptionDescription: "test jaeger description",
-		ReleaseName:       "jaeger",
-		ChartPath:         "test/jaeger",
-		Namespace:         "jaeger",
-		Version:           "7.7.7",
-		Values:            []string{"values/values.yaml"},
-		ExtraArgs:         []string{"--wait", "--dry-run"},
+		Option{"jaeger", "test jaeger description"},
+		HelmConfig{"jaeger", "test/jaeger", "jaeger", "7.7.7", []string{"values/values.yaml"}, nil, []string{"--wait", "--dry-run"}},
 	}
 	testCfgB := DynamicHelmConfig{
-		OptionName:        "kafka",
-		OptionDescription: "test kafka description",
-		ReleaseName:       "kafka",
-		ChartPath:         "test/kafka",
-		Namespace:         "kafka",
-		Version:           "8.8.8",
-		Values:            []string{"values/values.yaml"},
-		ExtraArgs:         []string{"--dry-run"},
+		Option{"kafka", "test kafka description"},
+		HelmConfig{"kafka", "test/kafka", "kafka", "8.8.8", []string{"values/values.yaml"}, nil, []string{"--dry-run"}},
 	}
 	InitCustomConfig(cfgFile, cfg)
 	Decode("deploy.helm", &helmCfg)

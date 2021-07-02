@@ -20,8 +20,8 @@ var postgresqlDeployment = c.HelmConfig{ReleaseName: "postgresql", ChartPath: "b
 var prometheusOperatorDeployment = c.HelmConfig{ReleaseName: "prometheus-operator", ChartPath: "prometheus-community/kube-prometheus-stack"}
 
 // NewDeleteOpts returns options for the deploy command
-func NewDeleteOpts() []u.Option {
-	opts := []u.Option{
+func NewDeleteOpts() []c.Option {
+	opts := []c.Option{
 		{
 			Arguments:   "jaeger",
 			Description: "Deletes Jaeger from your Kubernetes Cluster",
@@ -51,7 +51,7 @@ func NewDeleteOpts() []u.Option {
 }
 
 // NewDeleteCmd represents the deploy command
-func NewDeleteCmd(opts []u.Option) *cobra.Command {
+func NewDeleteCmd(opts []c.Option) *cobra.Command {
 	shallowDryRun := false
 	cmd := &cobra.Command{
 		Use:       "delete",
@@ -123,7 +123,7 @@ func NewDeleteCmd(opts []u.Option) *cobra.Command {
 			wg.Wait()
 		},
 	}
-	wrapper := u.CommandWrapper{
+	wrapper := c.CommandWrapper{
 		Cmd:  cmd,
 		Opts: opts,
 	}

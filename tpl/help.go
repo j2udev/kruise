@@ -9,7 +9,7 @@ import (
 	"text/template"
 	"unicode"
 
-	u "github.com/j2udevelopment/kruise/pkg/utils"
+	c "github.com/j2udevelopment/kruise/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -67,7 +67,7 @@ Use "{{.Cmd.CommandPath}} [command] --help" for more information about a command
 }
 
 // UsageFunc overrides the default UsageFunc used by Cobra to facilitate showing command options
-func UsageFunc(wrapper u.CommandWrapper) (f func(*cobra.Command) error) {
+func UsageFunc(wrapper c.CommandWrapper) (f func(*cobra.Command) error) {
 	return func(c *cobra.Command) error {
 		w := tabwriter.NewWriter(os.Stdout, 8, 8, 8, ' ', 0)
 		err := tmpl(w, UsageTemplate(), wrapper)

@@ -28,15 +28,8 @@ type DynamicDeployConfig struct {
 }
 
 type DynamicHelmConfig struct {
-	OptionName        string
-	OptionDescription string
-	ReleaseName       string
-	ChartPath         string
-	Namespace         string
-	Version           string
-	Values            []string
-	Args              []string
-	ExtraArgs         []string
+	Option     `mapstructure:"option"`
+	HelmConfig `mapstructure:"command"`
 }
 
 // Config struct used to unmarshal yaml kruise configuration
@@ -63,6 +56,17 @@ type HelmConfig struct {
 	Values      []string
 	Args        []string
 	ExtraArgs   []string
+}
+
+// CommandWrapper is used to wrap the Command struct to support command options
+type CommandWrapper struct {
+	Cmd  *cobra.Command
+	Opts []Option
+}
+
+type Option struct {
+	Arguments   string
+	Description string
 }
 
 // InitConfig initializes default config

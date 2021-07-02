@@ -8,21 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/spf13/cobra"
+	c "github.com/j2udevelopment/kruise/pkg/config"
 )
-
-// CommandWrapper is used to wrap the Command struct to support command options
-type CommandWrapper struct {
-	Cmd  *cobra.Command
-	Opts []Option
-}
-
-// Option is used to map an argument to a description and is primarily used for
-// usage templating
-type Option struct {
-	Arguments   string
-	Description string
-}
 
 // Check is an abstraction for common error debugging
 func Check(err error) {
@@ -69,8 +56,8 @@ func Contains(s []string, str string) bool {
 
 // CollectValidArgs is used to filter a slice of human-readable options into a
 // slice of strings to be used with the Cobra Command ValidArgs slice
-func CollectValidArgs(opts []Option) []string {
-	var collector = []string{}
+func CollectValidArgs(opts []c.Option) []string {
+	var collector []string
 	for _, opt := range opts {
 		collector = append(collector, strings.Split(opt.Arguments, ", ")...)
 	}
@@ -89,7 +76,7 @@ func CollectValidArgsDict(args []string) map[string]bool {
 
 // CollectValidArgsMap is used as a set to facilitate quickly looking up valid
 // arguments
-func CollectValidArgsMap(opts []Option) map[string][]string {
+func CollectValidArgsMap(opts []c.Option) map[string][]string {
 	argsMap := make(map[string][]string)
 	for _, opt := range opts {
 		optArgs := strings.Split(opt.Arguments, ", ")

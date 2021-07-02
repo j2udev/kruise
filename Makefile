@@ -1,4 +1,4 @@
-all: tidy fmt lint vet install
+all: tidy fmt lint vet test install
 
 lint:
 	golint ./...
