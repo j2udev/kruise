@@ -1,19 +1,24 @@
-all: update-deps vet fmt install
+all: tidy fmt lint vet install
+
+lint:
+	golint ./...
 
 fmt:
 	gofmt -w -s .
 
-fmt-dry-run:
+fmtd:
 	gofmt -w -d .
+
+tidy:
+	go mod tidy
 
 vet:
 	go vet ./...
 
-update-deps:
-	go mod tidy
+test:
+	go test ./... -v
 
 install:
 	cd cmd/kruise && go install && cd -
 
-test:
-	go test pkg/**/*_test.go -v
+.PHONY: test
