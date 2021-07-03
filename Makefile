@@ -1,7 +1,7 @@
 all: tidy fmt lint vet install
 
 lint:
-	golint ./...
+	golangci-lint run
 
 fmt:
 	gofmt -w -s .
