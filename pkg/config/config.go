@@ -5,11 +5,17 @@ import (
 	"log"
 	"os"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+type File struct {
+	Path      string
+	Extension string
+	FileName  string
+	Override  string
+}
 
 // ConfigFile struct used to make passing around config files easier
 type ConfigFile struct {
@@ -34,7 +40,7 @@ type DynamicHelmConfig struct {
 
 // Config struct used to unmarshal yaml kruise configuration
 type Config struct {
-	Deploy map[string][]DeployConfig `mapstructure:"deploy"`
+	Deploy map[string][]DynamicDeployConfig `mapstructure:"deploy"`
 }
 
 // DeployConfig struct used to unmarshal nested yaml kruise configuration
@@ -61,7 +67,7 @@ type HelmConfig struct {
 // CommandWrapper is used to wrap the Command struct to support command options
 type CommandWrapper struct {
 	Cmd  *cobra.Command
-	Opts []Option
+	Opts *[]Option
 }
 
 type Option struct {
@@ -69,21 +75,9 @@ type Option struct {
 	Description string
 }
 
-// InitConfig initializes default config
-func InitConfig() {
-	home, err := homedir.Dir()
-	cobra.CheckErr(err)
-	configFile := ConfigFile{
-		Path:      home,
-		Extension: "yaml",
-		FileName:  ".kruise",
-	}
-	var cfg DynamicConfig
-	InitCustomConfig(configFile, cfg)
-}
-
 // InitCustomConfig reads in a ConfigFile that is passed to viper
-func InitCustomConfig(configFile ConfigFile, data interface{}) {
+func Initialize(configFile ConfigFile, data interface{}) {
+	// log.Println("InitCustomConfig was called")
 	if configFile.Override != "" {
 		// Use config file from override
 		viper.SetConfigFile(configFile.Override)
@@ -96,6 +90,8 @@ func InitCustomConfig(configFile ConfigFile, data interface{}) {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	} else {
+		log.Fatalln("Something is wrong with the config path:", err)
 	}
 	err := viper.Unmarshal(&data)
 	if err != nil {

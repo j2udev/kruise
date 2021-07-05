@@ -1,13 +1,27 @@
 package main
 
 import (
-	c "github.com/j2udevelopment/kruise/pkg/config"
-	k "github.com/j2udevelopment/kruise/pkg/kruise"
+	"github.com/j2udevelopment/kruise/pkg/kruise"
 	"github.com/spf13/cobra"
 )
 
 // Simple main function that creates a new kruise command
 func main() {
-	c.InitConfig()
-	cobra.CheckErr(k.NewKruiseCmd().Execute())
+	cobra.OnInitialize(kruise.Initialize)
+	cobra.CheckErr(kruise.NewKruiseCmd().Execute())
+
+	//TODO: Figure out why the help flag is not initializing kruise config, options, etc
+	//The help command and usage works perfectly fine
+
+	// home, _ := homedir.Dir()
+
+	// //non-working args
+	// args := []string{"deploy", "-h", fmt.Sprintf("--config=%s", home+"/.kruise.yaml")}
+
+	// //working args
+	// args := []string{"help", "deploy", fmt.Sprintf("--config=%s", home+"/.kruise-2.yaml")}
+
+	// cmd := kruise.NewKruiseCmd()
+	// cmd.SetArgs(args)
+	// cobra.CheckErr(cmd.Execute())
 }

@@ -1,4 +1,4 @@
-package delete
+package kruise
 
 import (
 	"sync"
@@ -123,12 +123,12 @@ func NewDeleteCmd(opts []c.Option) *cobra.Command {
 			wg.Wait()
 		},
 	}
-	wrapper := c.CommandWrapper{
-		Cmd:  cmd,
-		Opts: opts,
-	}
+	// wrapper := c.CommandWrapper{
+	// 	Cmd:  cmd,
+	// 	Opts: opts,
+	// }
 	cmd.SetUsageTemplate(t.UsageTemplate())
-	cmd.SetUsageFunc(t.UsageFunc(wrapper))
+	// cmd.SetUsageFunc(t.UsageFunc(wrapper))
 	cmd.PersistentFlags().StringVarP(&chartNamespace, "namespace", "n", "", "Override the namespace for the specified deployments")
 	cmd.PersistentFlags().StringVar(&jaegerDeployment.Namespace, "jaeger-namespace", "observability", "Override the Jaeger namespace")
 	cmd.PersistentFlags().StringVar(&kafkaDeployment.Namespace, "kafka-namespace", "kafka", "Override the Kafka namespace")
