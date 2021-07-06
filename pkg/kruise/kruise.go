@@ -6,9 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configFile config.ConfigFile
-var cfg config.DynamicConfig
+var configFile config.File
+var cfg config.Manifest
 
+// Initialize initializes kruise configuration and commands options
 func Initialize() {
 	home, err := homedir.Dir()
 	cobra.CheckErr(err)
@@ -17,8 +18,10 @@ func Initialize() {
 	configFile.FileName = ".kruise"
 	config.Initialize(configFile, cfg)
 	NewDeployOpts()
+	NewDeleteOpts()
 }
 
+// NewKruiseCmd represents the kruise command
 func NewKruiseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kruise",
@@ -27,7 +30,7 @@ func NewKruiseCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		NewDeployCmd(),
-		NewDeleteCmd(NewDeleteOpts()),
+		NewDeleteCmd(),
 	)
 	cmd.PersistentFlags().StringVarP(&configFile.Override, "config", "c", "", "Specify a custom config file (default is ~/.kruise.yaml)")
 	return cmd

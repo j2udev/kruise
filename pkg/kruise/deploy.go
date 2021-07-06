@@ -3,48 +3,50 @@ package kruise
 import (
 	"strings"
 
-	c "github.com/j2udevelopment/kruise/pkg/config"
-	h "github.com/j2udevelopment/kruise/pkg/helm"
-	u "github.com/j2udevelopment/kruise/pkg/utils"
-	t "github.com/j2udevelopment/kruise/tpl"
+	"github.com/j2udevelopment/kruise/pkg/config"
+	"github.com/j2udevelopment/kruise/pkg/helm"
+	"github.com/j2udevelopment/kruise/pkg/utils"
+	"github.com/j2udevelopment/kruise/tpl"
 	"github.com/spf13/cobra"
 )
 
-var helmCfg []c.DynamicHelmConfig
-var opts []c.Option
-var validOpts []string
+var helmDep []config.HelmDeployment
+var deployOpts []config.Option
+var validDeployOpts []string
 
-// NewDeployOpts returns options for the deploy command
+// NewDeployOpts sets deployer and valid option slices
 func NewDeployOpts() {
-	c.Decode("deploy.helm", &helmCfg)
-	for _, dep := range helmCfg {
-		opts = append(opts, dep.Option)
+	config.Decode("deploy.helm", &helmDep)
+	for _, dep := range helmDep {
+		deployOpts = append(deployOpts, dep.Option)
 	}
-	validOpts = u.CollectValidArgs(opts)
+	validDeployOpts = utils.CollectValidArgs(deployOpts)
 }
 
 // NewDeployCmd represents the deploy command
 func NewDeployCmd() *cobra.Command {
+	//TODO: Set this with a flag
+	shallowDryRun := true
 	cmd := &cobra.Command{
 		Use:       "deploy",
 		Short:     "Deploy the specified options to your Kubernetes cluster",
 		Args:      cobra.MinimumNArgs(1),
-		ValidArgs: validOpts,
+		ValidArgs: validDeployOpts,
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, arg := range args {
-				for _, helm := range helmCfg {
-					if u.Contains(strings.Split(helm.Option.Arguments, ", "), arg) {
-						h.Install(true, &helm.HelmConfig)
+				for _, dep := range helmDep {
+					if utils.Contains(strings.Split(dep.Option.Arguments, ", "), arg) {
+						helm.Install(shallowDryRun, &dep.HelmCommand)
 					}
 				}
 			}
 		},
 	}
-	wrapper := c.CommandWrapper{
+	wrapper := config.CommandWrapper{
 		Cmd:  cmd,
-		Opts: &opts,
+		Opts: &deployOpts,
 	}
-	cmd.SetUsageTemplate(t.UsageTemplate())
-	cmd.SetUsageFunc(t.UsageFunc(wrapper))
+	cmd.SetUsageTemplate(tpl.UsageTemplate())
+	cmd.SetUsageFunc(tpl.UsageFunc(wrapper))
 	return cmd
 }

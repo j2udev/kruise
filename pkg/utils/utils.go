@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	c "github.com/j2udevelopment/kruise/pkg/config"
+	"github.com/j2udevelopment/kruise/pkg/config"
 )
 
 // Check is an abstraction for common error debugging
@@ -56,7 +56,7 @@ func Contains(s []string, str string) bool {
 
 // CollectValidArgs is used to filter a slice of human-readable options into a
 // slice of strings to be used with the Cobra Command ValidArgs slice
-func CollectValidArgs(opts []c.Option) []string {
+func CollectValidArgs(opts []config.Option) []string {
 	var collector []string
 	for _, opt := range opts {
 		collector = append(collector, strings.Split(opt.Arguments, ", ")...)
@@ -76,7 +76,7 @@ func CollectValidArgsDict(args []string) map[string]bool {
 
 // CollectValidArgsMap is used as a set to facilitate quickly looking up valid
 // arguments
-func CollectValidArgsMap(opts []c.Option) map[string][]string {
+func CollectValidArgsMap(opts []config.Option) map[string][]string {
 	argsMap := make(map[string][]string)
 	for _, opt := range opts {
 		optArgs := strings.Split(opt.Arguments, ", ")

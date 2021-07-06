@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// File struct used to capture config file information to be passed to viper
 type File struct {
 	Path      string
 	Extension string
@@ -17,44 +18,25 @@ type File struct {
 	Override  string
 }
 
-// ConfigFile struct used to make passing around config files easier
-type ConfigFile struct {
-	Path      string
-	Extension string
-	FileName  string
-	Override  string
+// Manifest struct used to unmarshal yaml kruise configuration
+type Manifest struct {
+	Deploy map[string][]Deployments `mapstructure:"deploy"`
+	Delete map[string][]Deployments `mapstructure:"delete"`
 }
 
-type DynamicConfig struct {
-	Deploy map[string][]DynamicDeployConfig `mapstructure:"deploy"`
+// Deployments struct used to unmarshal yaml kruise configuration
+type Deployments struct {
+	Helm map[string][]HelmDeployment `mapstructure:"helm"`
 }
 
-type DynamicDeployConfig struct {
-	Helm map[string][]DynamicHelmConfig `mapstructure:"helm"`
+// HelmDeployment struct used to unmarshal yaml kruise configuration
+type HelmDeployment struct {
+	Option      `mapstructure:"option"`
+	HelmCommand `mapstructure:"command"`
 }
 
-type DynamicHelmConfig struct {
-	Option     `mapstructure:"option"`
-	HelmConfig `mapstructure:"command"`
-}
-
-// Config struct used to unmarshal yaml kruise configuration
-type Config struct {
-	Deploy map[string][]DynamicDeployConfig `mapstructure:"deploy"`
-}
-
-// DeployConfig struct used to unmarshal nested yaml kruise configuration
-type DeployConfig struct {
-	Jaeger             map[string][]HelmConfig `mapstructure:"jaeger"`
-	Kafka              map[string][]HelmConfig `mapstructure:"kafka"`
-	Mongodb            map[string][]HelmConfig `mapstructure:"mongodb"`
-	Mysql              map[string][]HelmConfig `mapstructure:"mysql"`
-	Postgresql         map[string][]HelmConfig `mapstructure:"postgresql"`
-	PrometheusOperator map[string][]HelmConfig `mapstructure:"prometheus-operator"`
-}
-
-// HelmConfig struct used to unmarshal nested yaml kruise configuration
-type HelmConfig struct {
+// HelmCommand struct used to unmarshal yaml kruise configuration
+type HelmCommand struct {
 	ReleaseName string
 	ChartPath   string
 	Namespace   string
@@ -64,20 +46,22 @@ type HelmConfig struct {
 	ExtraArgs   []string
 }
 
-// CommandWrapper is used to wrap the Command struct to support command options
-type CommandWrapper struct {
-	Cmd  *cobra.Command
-	Opts *[]Option
-}
-
+// Option struct used to unmarshal yaml kruise configuration and facilitate
+// wrapping cobra commands
 type Option struct {
 	Arguments   string
 	Description string
 }
 
-// InitCustomConfig reads in a ConfigFile that is passed to viper
-func Initialize(configFile ConfigFile, data interface{}) {
-	// log.Println("InitCustomConfig was called")
+// CommandWrapper is used to wrap cobra commands to support command options
+type CommandWrapper struct {
+	Cmd  *cobra.Command
+	Opts *[]Option
+}
+
+// Initialize reads in a configuration file that is passed to viper and
+// unmarshalled
+func Initialize(configFile File, data interface{}) {
 	if configFile.Override != "" {
 		// Use config file from override
 		viper.SetConfigFile(configFile.Override)

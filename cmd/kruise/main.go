@@ -10,8 +10,10 @@ func main() {
 	cobra.OnInitialize(kruise.Initialize)
 	cobra.CheckErr(kruise.NewKruiseCmd().Execute())
 
-	//TODO: Figure out why the help flag is not initializing kruise config, options, etc
-	//The help command and usage works perfectly fine
+	//TODO: Figure out why the help flag is not initializing kruise config,
+	// options, etc
+	//TODO: The help command and usage works perfectly fine
+	//TODO: Abstract this kind of testing to a dedicated test file
 
 	// home, _ := homedir.Dir()
 

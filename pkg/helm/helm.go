@@ -4,21 +4,21 @@ import (
 	"log"
 	"os/exec"
 
-	c "github.com/j2udevelopment/kruise/pkg/config"
-	u "github.com/j2udevelopment/kruise/pkg/utils"
+	"github.com/j2udevelopment/kruise/pkg/config"
+	"github.com/j2udevelopment/kruise/pkg/utils"
 )
 
 // ConstructHelmCommand is used to construct a default Helm install command
 // from configuration
-func ConstructHelmCommand(helmConfig *c.HelmConfig) {
-	if helmConfig.ReleaseName == "" {
+func ConstructHelmCommand(helmCmd *config.HelmCommand) {
+	if helmCmd.ReleaseName == "" {
 		log.Fatal("You must specify a Helm release name")
 	}
-	if helmConfig.ChartPath == "" {
+	if helmCmd.ChartPath == "" {
 		log.Fatal("You must specify a Helm chart")
 	}
-	if helmConfig.Namespace == "" {
-		helmConfig.Namespace = "default"
+	if helmCmd.Namespace == "" {
+		helmCmd.Namespace = "default"
 	}
 }
 
@@ -32,58 +32,58 @@ func CheckHelm() {
 
 // ConstructAndCheck is used to verify that Helm is installed and consruct a
 // default Helm command
-func ConstructAndCheck(helmConfig *c.HelmConfig) {
+func ConstructAndCheck(helmCmd *config.HelmCommand) {
 	CheckHelm()
-	ConstructHelmCommand(helmConfig)
+	ConstructHelmCommand(helmCmd)
 }
 
 // DefineInstallArgs applies additional arguments to a default Helm install
 // command
-func DefineInstallArgs(helmConfig *c.HelmConfig) {
-	if len(helmConfig.Args) == 0 {
-		helmConfig.Args = []string{
+func DefineInstallArgs(helmCmd *config.HelmCommand) {
+	if len(helmCmd.Args) == 0 {
+		helmCmd.Args = []string{
 			"helm",
 			"upgrade", "-i",
-			helmConfig.ReleaseName,
-			helmConfig.ChartPath,
-			"--namespace", helmConfig.Namespace,
+			helmCmd.ReleaseName,
+			helmCmd.ChartPath,
+			"--namespace", helmCmd.Namespace,
 			"--create-namespace",
 		}
 	}
-	if helmConfig.Version != "" {
-		helmConfig.Args = append(helmConfig.Args, "--version", helmConfig.Version)
+	if helmCmd.Version != "" {
+		helmCmd.Args = append(helmCmd.Args, "--version", helmCmd.Version)
 	}
-	for _, val := range helmConfig.Values {
-		helmConfig.Args = append(helmConfig.Args, "-f", val)
+	for _, val := range helmCmd.Values {
+		helmCmd.Args = append(helmCmd.Args, "-f", val)
 	}
-	helmConfig.Args = append(helmConfig.Args, helmConfig.ExtraArgs...)
+	helmCmd.Args = append(helmCmd.Args, helmCmd.ExtraArgs...)
 }
 
 // DefineUninstallArgs applies additional arguments to a default Helm uninstall
 // command
-func DefineUninstallArgs(helmConfig *c.HelmConfig) {
-	if len(helmConfig.Args) == 0 {
-		helmConfig.Args = []string{
+func DefineUninstallArgs(helmCmd *config.HelmCommand) {
+	if len(helmCmd.Args) == 0 {
+		helmCmd.Args = []string{
 			"helm",
 			"uninstall",
-			helmConfig.ReleaseName,
+			helmCmd.ReleaseName,
 			"--namespace",
-			helmConfig.Namespace,
+			helmCmd.Namespace,
 		}
 	}
-	helmConfig.Args = append(helmConfig.Args, helmConfig.ExtraArgs...)
+	helmCmd.Args = append(helmCmd.Args, helmCmd.ExtraArgs...)
 }
 
 // Install is used to install Helm charts in an abstract way
-func Install(shallowDryRun bool, helmConfig *c.HelmConfig) error {
-	ConstructAndCheck(helmConfig)
-	DefineInstallArgs(helmConfig)
-	return u.ExecuteCommand(shallowDryRun, helmConfig.Args[0], helmConfig.Args[1:]...)
+func Install(shallowDryRun bool, helmCmd *config.HelmCommand) error {
+	ConstructAndCheck(helmCmd)
+	DefineInstallArgs(helmCmd)
+	return utils.ExecuteCommand(shallowDryRun, helmCmd.Args[0], helmCmd.Args[1:]...)
 }
 
 // Uninstall is used to uninstall Helm charts in an abstract way
-func Uninstall(shallowDryRun bool, helmConfig *c.HelmConfig) error {
-	ConstructAndCheck(helmConfig)
-	DefineUninstallArgs(helmConfig)
-	return u.ExecuteCommand(shallowDryRun, helmConfig.Args[0], helmConfig.Args[1:]...)
+func Uninstall(shallowDryRun bool, helmCmd *config.HelmCommand) error {
+	ConstructAndCheck(helmCmd)
+	DefineUninstallArgs(helmCmd)
+	return utils.ExecuteCommand(shallowDryRun, helmCmd.Args[0], helmCmd.Args[1:]...)
 }
