@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	c "github.com/j2udevelopment/kruise/pkg/config"
+	"github.com/j2udevelopment/kruise/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestConstructHelmInstallCommand(t *testing.T) {
 		"helm upgrade -i prom-op prom-op/prom-op --namespace prom-op --create-namespace",
 		"helm upgrade -i test!@#$release test!@#$/test!@#$ --namespace test --create-namespace --version 7.7.7 --wait",
 	}
-	helmConfig := []c.HelmConfig{
+	helmConfig := []config.HelmCommand{
 		{ReleaseName: "jaeger", ChartPath: "jaeger/jaeger", Namespace: "jaeger"},
 		{ReleaseName: "kafka", ChartPath: "kafka/kafka", Namespace: "kafka"},
 		{ReleaseName: "mongodb", ChartPath: "mongodb/mongodb", Namespace: "mongodb"},
@@ -45,7 +45,7 @@ func TestConstructHelmUninstallCommand(t *testing.T) {
 		"helm uninstall prom-op --namespace prom-op",
 		"helm uninstall test!@#$release --namespace test --dry-run",
 	}
-	helmConfig := []c.HelmConfig{
+	helmConfig := []config.HelmCommand{
 		{ReleaseName: "jaeger", ChartPath: "jaeger/jaeger", Namespace: "jaeger"},
 		{ReleaseName: "kafka", ChartPath: "kafka/kafka", Namespace: "kafka"},
 		{ReleaseName: "mongodb", ChartPath: "mongodb/mongodb", Namespace: "mongodb"},
