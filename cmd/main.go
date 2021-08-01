@@ -20,7 +20,7 @@ func main() {
 	//TODO: Abstract this kind of testing to a test file
 
 	// var cmd *cobra.Command
-	// home, _ := homedir.Dir()
+	// home, _ := os.UserHomeDir()
 	// //non-working args
 	// // notWorking := []string{"deploy", "--help", fmt.Sprintf("--config=%s", home+"/.kruise-2.yaml")}
 	// // cmd = kruise.NewCmd()

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +22,8 @@ type Kommand struct {
 
 // Initialize is used to initialize kruise configuration and command options
 func Initialize() {
-	home, err := homedir.Dir()
-	checkErr(err)
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
 	file := &kfg.Metadata
 	file.Path = home
 	file.Name = ".kruise"
@@ -59,9 +59,7 @@ func ExecuteCommand(shallowDryRun bool, name string, args ...string) error {
 		stdout, _ := cmd.StdoutPipe()
 		if err := cmd.Start(); err != nil {
 			log.Printf("%s", err)
-
-			waitErr := cmd.Wait()
-			checkErr(waitErr)
+			cobra.CheckErr(cmd.Wait())
 			return err
 		}
 		cmdErr, _ := io.ReadAll(stderr)
@@ -71,8 +69,7 @@ func ExecuteCommand(shallowDryRun bool, name string, args ...string) error {
 			return errors.New(string(cmdErr))
 		}
 		fmt.Printf("%s", cmdOut)
-		waitErr := cmd.Wait()
-		checkErr(waitErr)
+		cobra.CheckErr(cmd.Wait())
 	}
 	return nil
 }

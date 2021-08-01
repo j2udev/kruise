@@ -3,6 +3,7 @@ package kruise
 import (
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
@@ -28,12 +29,11 @@ func NewDeployer() Deployer {
 // appropriately
 func (d Deployer) Deploy(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
-	checkErr(err)
+	cobra.CheckErr(err)
 	for _, arg := range args {
 		for _, dep := range d.HelmDeployer {
 			if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
-				err := dep.HelmCommand.Install(shallowDryRun)
-				checkErr(err)
+				cobra.CheckErr(dep.HelmCommand.Install(shallowDryRun))
 			}
 		}
 	}
@@ -43,12 +43,11 @@ func (d Deployer) Deploy(flags *pflag.FlagSet, args []string) {
 // appropriately
 func (d Deployer) Delete(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
-	checkErr(err)
+	cobra.CheckErr(err)
 	for _, arg := range args {
 		for _, dep := range d.HelmDeployer {
 			if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
-				err := dep.HelmCommand.Uninstall(shallowDryRun)
-				checkErr(err)
+				cobra.CheckErr(dep.HelmCommand.Uninstall(shallowDryRun))
 			}
 		}
 	}

@@ -36,7 +36,6 @@ func NewDeployCmd() *cobra.Command {
 	// the help command instead of the flag for commands that can pass multiple
 	// options
 	cmd.Flags().BoolP("help", "h", false, "show help for the deploy command")
-	err := cmd.Flags().MarkHidden("help")
-	checkErr(err)
+	cobra.CheckErr(cmd.Flags().MarkHidden("help"))
 	return cmd
 }
