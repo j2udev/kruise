@@ -1,52 +1,36 @@
 package kruise
 
 import (
-	"strings"
-
-	"github.com/j2udevelopment/kruise/pkg/config"
-	"github.com/j2udevelopment/kruise/pkg/helm"
-	"github.com/j2udevelopment/kruise/pkg/utils"
-	"github.com/j2udevelopment/kruise/tpl"
 	"github.com/spf13/cobra"
 )
 
-var helmDep []config.HelmDeployment
-var deployOpts []config.Option
-var validDeployOpts []string
-
-// NewDeployOpts sets deployer and valid option slices
-func NewDeployOpts() {
-	config.Decode("deploy.helm", &helmDep)
-	for _, dep := range helmDep {
-		deployOpts = append(deployOpts, dep.Option)
-	}
-	validDeployOpts = utils.CollectValidArgs(deployOpts)
-}
-
 // NewDeployCmd represents the deploy command
+// options are dynamically populated from `deploy` config in the kruise manifest
 func NewDeployCmd() *cobra.Command {
-	//TODO: Set this with a flag
-	shallowDryRun := true
 	cmd := &cobra.Command{
 		Use:       "deploy",
 		Short:     "Deploy the specified options to your Kubernetes cluster",
 		Args:      cobra.MinimumNArgs(1),
-		ValidArgs: validDeployOpts,
+		ValidArgs: collectValidArgs(deployer.DeployOptions),
 		Run: func(cmd *cobra.Command, args []string) {
-			for _, arg := range args {
-				for _, dep := range helmDep {
-					if utils.Contains(strings.Split(dep.Option.Arguments, ", "), arg) {
-						helm.Install(shallowDryRun, &dep.HelmCommand)
-					}
-				}
-			}
+			deployer.Deploy(cmd.Flags(), args)
 		},
 	}
-	wrapper := config.CommandWrapper{
+	kmd := &Kommand{
 		Cmd:  cmd,
-		Opts: &deployOpts,
+		Opts: &deployer.DeployOptions,
 	}
-	cmd.SetUsageTemplate(tpl.UsageTemplate())
-	cmd.SetUsageFunc(tpl.UsageFunc(wrapper))
+	cmd.SetUsageTemplate(UsageTemplate())
+	cmd.SetHelpTemplate(UsageTemplate())
+	cmd.SetUsageFunc(UsageFunc(*kmd))
+	cmd.SetHelpFunc(HelpFunc(*kmd))
+	cmd.PersistentFlags().BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
+	//TODO: Cobra doesn't call initializers before the help flag attempts to
+	// render the usage. Try to find a way around this later, but for now rely on
+	// the help command instead of the flag for commands that can pass multiple
+	// options
+	cmd.Flags().BoolP("help", "h", false, "show help for the deploy command")
+	err := cmd.Flags().MarkHidden("help")
+	checkErr(err)
 	return cmd
 }

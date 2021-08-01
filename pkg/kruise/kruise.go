@@ -1,28 +1,40 @@
 package kruise
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/config"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os/exec"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
-var configFile config.File
-var cfg config.Manifest
+var kfg Konfig
+var deployer Deployer
 
-// Initialize initializes kruise configuration and commands options
-func Initialize() {
-	home, err := homedir.Dir()
-	cobra.CheckErr(err)
-	configFile.Path = home
-	configFile.Extension = "yaml"
-	configFile.FileName = ".kruise"
-	config.Initialize(configFile, cfg)
-	NewDeployOpts()
-	NewDeleteOpts()
+// Kommand is used to wrap cobra commands to support command options
+type Kommand struct {
+	Cmd  *cobra.Command
+	Opts *[]Option
 }
 
-// NewKruiseCmd represents the kruise command
-func NewKruiseCmd() *cobra.Command {
+// Initialize is used to initialize kruise configuration and command options
+func Initialize() {
+	home, err := homedir.Dir()
+	checkErr(err)
+	file := &kfg.Metadata
+	file.Path = home
+	file.Name = ".kruise"
+	file.Extension = "yaml"
+	kfg.Initialize()
+	// must initialize konfig before constructing a deployer
+	deployer = NewDeployer()
+}
+
+// NewCmd represents the kruise command
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kruise",
 		Short: "Kruise streamlines the local development experience",
@@ -32,6 +44,34 @@ func NewKruiseCmd() *cobra.Command {
 		NewDeployCmd(),
 		NewDeleteCmd(),
 	)
-	cmd.PersistentFlags().StringVarP(&configFile.Override, "config", "c", "", "Specify a custom config file (default is ~/.kruise.yaml)")
+	cmd.PersistentFlags().StringVarP(&kfg.Metadata.Override, "config", "c", "", "Specify a custom config file (default is ~/.kruise.yaml)")
 	return cmd
+}
+
+// ExecuteCommand is used as a repeatable means of calling CLI commands
+func ExecuteCommand(shallowDryRun bool, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	if shallowDryRun {
+		fmt.Printf("%s\n", cmd)
+	} else {
+		stderr, _ := cmd.StderrPipe()
+		stdout, _ := cmd.StdoutPipe()
+		if err := cmd.Start(); err != nil {
+			log.Printf("%s", err)
+
+			waitErr := cmd.Wait()
+			checkErr(waitErr)
+			return err
+		}
+		cmdErr, _ := io.ReadAll(stderr)
+		cmdOut, _ := io.ReadAll(stdout)
+		if len(cmdErr) > 0 {
+			log.Printf("%s", cmdErr)
+			return errors.New(string(cmdErr))
+		}
+		fmt.Printf("%s", cmdOut)
+		waitErr := cmd.Wait()
+		checkErr(waitErr)
+	}
+	return nil
 }

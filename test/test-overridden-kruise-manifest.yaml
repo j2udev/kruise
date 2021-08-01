@@ -10,7 +10,7 @@ deploy:
         version: 7.7.7
         values:
           - values/values.yaml
-        extraArgs:
+        extraInstallArgs:
           - "--wait"
           - "--dry-run"
     - option:
@@ -23,20 +23,8 @@ deploy:
         version: 8.8.8
         values:
           - values/values.yaml
-        extraArgs:
+        extraInstallArgs:
           - "--dry-run"
-    - option:
-        arguments: "mongodb, mongo"
-        description: "test mongodb description"
-      command:
-        releaseName: mongodb
-        chartPath: test/mongodb
-        namespace: mongodb
-        version: 9.9.9
-        values:
-          - values/values.yaml
-        extraArgs:
-          - "--reuse-values"
 delete:
   helm:
     - option:
@@ -51,9 +39,3 @@ delete:
       command:
         releaseName: kafka
         namespace: kafka
-    - option:
-        arguments: "mongodb, mongo"
-        description: "test mongodb description"
-      command:
-        releaseName: mongodb
-        namespace: mongodb

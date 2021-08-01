@@ -1,0 +1,55 @@
+deploy:
+  helm:
+    - option:
+        arguments: "jaeger"
+        description: "Deploys Jaeger to your Kubernetes cluster"
+      command:
+        releaseName: jaeger
+        chartPath: jaegertracing/jaeger
+        namespace: observability
+        version: 0.39.5
+        values:
+          - /path/to/jaeger/values.yaml
+    - option:
+        arguments: "kafka"
+        description: "Deploys Kafka to your Kubernetes cluster"
+      command:
+        releaseName: kafka
+        chartPath: bitnami/kafka
+        namespace: kafka
+        version: 11.8.9
+        values:
+          - /path/to/kafka/values.yaml
+    - option:
+        arguments: "mongodb, mongo"
+        description: "Deploys MongoDB to your Kubernetes cluster"
+      command:
+        releaseName: mongodb
+        chartPath: bitnami/mongodb
+        namespace: mongodb
+        version: 7.14.8
+        values:
+          - /path/to/mongodb/values.yaml
+delete:
+  helm:
+    - option:
+        arguments: "jaeger"
+        description: "Deletes Jaeger from your Kubernetes cluster"
+      command:
+        releaseName: jaeger
+        chartPath: jaegertracing/jaeger
+        namespace: observability
+    - option:
+        arguments: "kafka"
+        description: "Deletes Kafka from your Kubernetes cluster"
+      command:
+        releaseName: kafka
+        chartPath: bitnami/kafka
+        namespace: kafka
+    - option:
+        arguments: "mongodb, mongo"
+        description: "Deletes MongoDB from your Kubernetes cluster"
+      command:
+        releaseName: mongodb
+        chartPath: bitnami/mongodb
+        namespace: mongodb
