@@ -53,3 +53,23 @@ func (d Deployer) Delete(flags *pflag.FlagSet, args []string) {
 		}
 	}
 }
+
+// ValidDeployArgs loops over the DeployOptions for the Deployer and collects
+// the valid arguments from the human readable string delimited by `, `
+func (d Deployer) ValidDeployArgs() []string {
+	var collector []string
+	for _, opt := range d.DeployOptions {
+		collector = append(collector, strings.Split(opt.Arguments, ", ")...)
+	}
+	return collector
+}
+
+// ValidDeleteArgs loops over the DeleteOptions for the Deployer and collects
+// the valid arguments from the human readable string delimited by `, `
+func (d Deployer) ValidDeleteArgs() []string {
+	var collector []string
+	for _, opt := range d.DeleteOptions {
+		collector = append(collector, strings.Split(opt.Arguments, ", ")...)
+	}
+	return collector
+}

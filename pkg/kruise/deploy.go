@@ -8,12 +8,18 @@ import (
 // options are dynamically populated from `deploy` config in the kruise manifest
 func NewDeployCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:       "deploy",
-		Short:     "Deploy the specified options to your Kubernetes cluster",
-		Args:      cobra.MinimumNArgs(1),
-		ValidArgs: collectValidArgs(deployer.DeployOptions),
-		Run: func(cmd *cobra.Command, args []string) {
+		Use:   "deploy",
+		Short: "Deploy the specified options to your Kubernetes cluster",
+		Args:  cobra.MinimumNArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.ValidArgs = deployer.ValidDeployArgs()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.OnlyValidArgs(cmd, args); err != nil {
+				return err
+			}
 			deployer.Deploy(cmd.Flags(), args)
+			return nil
 		},
 	}
 	kmd := &Kommand{
