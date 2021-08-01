@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestContainsTruthy(t *testing.T) {
+func TestContains(t *testing.T) {
 	truthyResult := contains([]string{"this", "is", "a", "test"}, "test")
 	if truthyResult != true {
 		t.Fatalf("Expected true")

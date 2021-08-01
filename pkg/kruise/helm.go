@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -30,8 +31,7 @@ type HelmCommand struct {
 // unmarshalled configuration. Valid keys are `deploy` and `delete`
 func GetHelmDeployments(key string) []HelmDeployment {
 	var d []HelmDeployment
-	err := mapstructure.Decode(viper.Get(key+".helm"), &d)
-	checkErr(err)
+	cobra.CheckErr(mapstructure.Decode(viper.Get(key+".helm"), &d))
 	return d
 }
 
