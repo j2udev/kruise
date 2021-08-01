@@ -1,0 +1,59 @@
+deploy:
+  helm:
+    - option:
+        arguments: "jaeger"
+        description: "test jaeger description"
+      command:
+        releaseName: jaeger
+        chartPath: test/jaeger
+        namespace: jaeger
+        version: 7.7.7
+        values:
+          - values/values.yaml
+        extraInstallArgs:
+          - "--wait"
+          - "--dry-run"
+    - option:
+        arguments: "kafka"
+        description: "test kafka description"
+      command:
+        releaseName: kafka
+        chartPath: test/kafka
+        namespace: kafka
+        version: 8.8.8
+        values:
+          - values/values.yaml
+        extraInstallArgs:
+          - "--dry-run"
+    - option:
+        arguments: "mongodb, mongo"
+        description: "test mongodb description"
+      command:
+        releaseName: mongodb
+        chartPath: test/mongodb
+        namespace: mongodb
+        version: 9.9.9
+        values:
+          - values/values.yaml
+        extraInstallArgs:
+          - "--reuse-values"
+delete:
+  helm:
+    - option:
+        arguments: "jaeger"
+        description: "test jaeger description"
+      command:
+        releaseName: jaeger
+        namespace: jaeger
+    - option:
+        arguments: "kafka"
+        description: "test kafka description"
+      command:
+        releaseName: kafka
+        namespace: kafka
+    - option:
+        arguments: "mongodb, mongo"
+        description: "test mongodb description"
+      command:
+        releaseName: mongodb
+        namespace: mongodb

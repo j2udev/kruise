@@ -1,7 +1,7 @@
-all: tidy fmt lint vet install
+all: tidy fmt lint vet test install
 
 lint:
-	golangci-lint run
+	golangci-lint run ./...
 
 fmt:
 	gofmt -w -s .
@@ -19,6 +19,6 @@ test:
 	go test ./... -v
 
 install:
-	cd cmd/kruise && go install && cd -
+	cd cmd && go build -o /usr/local/bin/kruise && cd -
 
 .PHONY: test
