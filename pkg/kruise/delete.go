@@ -8,12 +8,18 @@ import (
 // options are dynamically populated from `delete` config in the kruise manifest
 func NewDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:       "delete",
-		Short:     "Delete the specified options from your Kubernetes cluster",
-		Args:      cobra.MinimumNArgs(1),
-		ValidArgs: collectValidArgs(deployer.DeleteOptions),
-		Run: func(cmd *cobra.Command, args []string) {
+		Use:   "delete",
+		Short: "Delete the specified options from your Kubernetes cluster",
+		Args:  cobra.MinimumNArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.ValidArgs = deployer.ValidDeleteArgs()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.OnlyValidArgs(cmd, args); err != nil {
+				return err
+			}
 			deployer.Delete(cmd.Flags(), args)
+			return nil
 		},
 	}
 	kmd := &Kommand{

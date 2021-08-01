@@ -37,8 +37,9 @@ func Initialize() {
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kruise",
-		Short: "Kruise streamlines the local development experience",
-		Long:  "Kruise is a CLI that aims to streamline the local development experience.\nModern software development can involve an overwhelming number of tools.\nYou can think of Kruise as a CLI wrapper that abstracts (but doesn't hide) the finer details of using many other CLIs that commonly make their way into a software engineers tool kit.",
+		Short: "Kruise is a black-box CLI",
+		Long: `Kruise is a configurable CLI. It has a set of core commands whose
+options are determined by a config file.`,
 	}
 	cmd.AddCommand(
 		NewDeployCmd(),
