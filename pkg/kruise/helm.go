@@ -3,6 +3,7 @@ package kruise
 import (
 	"log"
 	"os/exec"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -42,8 +43,24 @@ func (helm *HelmCommand) Install(shallowDryRun bool) error {
 	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
 }
 
+// InstallP is used to concurrently install Helm charts in an abstract way
+func (helm *HelmCommand) InstallP(shallowDryRun bool, wg *sync.WaitGroup) error {
+	defer wg.Done()
+	checkHelm()
+	constructHelmInstallCommand(helm)
+	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
+}
+
 // Uninstall is used to install Helm charts in an abstract way
 func (helm *HelmCommand) Uninstall(shallowDryRun bool) error {
+	checkHelm()
+	constructHelmUninstallCommand(helm)
+	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
+}
+
+// UninstallP is used to concurrently uninstall Helm charts in an abstract way
+func (helm *HelmCommand) UninstallP(shallowDryRun bool, wg *sync.WaitGroup) error {
+	defer wg.Done()
 	checkHelm()
 	constructHelmUninstallCommand(helm)
 	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
