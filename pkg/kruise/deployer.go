@@ -45,12 +45,13 @@ func (d Deployer) DeployP(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
 	cobra.CheckErr(err)
 	wg := sync.WaitGroup{}
-	wg.Add(len(args))
 	for _, arg := range args {
 		for _, dep := range d.HelmDeployer {
+			wg.Add(1)
 			go func(dep HelmDeployment, arg string) {
+				defer wg.Done()
 				if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
-					cobra.CheckErr(dep.HelmCommand.InstallP(shallowDryRun, &wg))
+					cobra.CheckErr(dep.HelmCommand.Install(shallowDryRun))
 				}
 			}(dep, arg)
 		}
@@ -77,12 +78,12 @@ func (d Deployer) DeleteP(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
 	cobra.CheckErr(err)
 	wg := sync.WaitGroup{}
-	wg.Add(len(args))
 	for _, arg := range args {
 		for _, dep := range d.HelmDeployer {
+			wg.Add(1)
 			go func(dep HelmDeployment, arg string) {
 				if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
-					cobra.CheckErr(dep.HelmCommand.UninstallP(shallowDryRun, &wg))
+					cobra.CheckErr(dep.HelmCommand.Uninstall(shallowDryRun))
 				}
 			}(dep, arg)
 		}
