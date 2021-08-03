@@ -2,6 +2,7 @@ package kruise
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -25,8 +26,7 @@ func NewDeployer() Deployer {
 	}
 }
 
-// Deploy checks flags and arguments and deploys to a Kubernetes cluster
-// appropriately
+// Deploy checks flags and arguments and deploys args to a Kubernetes cluster
 func (d Deployer) Deploy(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
 	cobra.CheckErr(err)
@@ -39,8 +39,26 @@ func (d Deployer) Deploy(flags *pflag.FlagSet, args []string) {
 	}
 }
 
-// Delete checks flags and arguments and deletes from a Kubernetes cluster
-// appropriately
+// DeployP checks flags and arguments and concurrently deploys args to a
+// Kubernetes cluster
+func (d Deployer) DeployP(flags *pflag.FlagSet, args []string) {
+	shallowDryRun, err := flags.GetBool("shallow-dry-run")
+	cobra.CheckErr(err)
+	wg := sync.WaitGroup{}
+	wg.Add(len(args))
+	for _, arg := range args {
+		for _, dep := range d.HelmDeployer {
+			go func(dep HelmDeployment, arg string) {
+				if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
+					cobra.CheckErr(dep.HelmCommand.InstallP(shallowDryRun, &wg))
+				}
+			}(dep, arg)
+		}
+	}
+	wg.Wait()
+}
+
+// Delete checks flags and arguments and deletes args from a Kubernetes cluster
 func (d Deployer) Delete(flags *pflag.FlagSet, args []string) {
 	shallowDryRun, err := flags.GetBool("shallow-dry-run")
 	cobra.CheckErr(err)
@@ -51,6 +69,25 @@ func (d Deployer) Delete(flags *pflag.FlagSet, args []string) {
 			}
 		}
 	}
+}
+
+// DeleteP checks flags and arguments and concurrently deletes args from a
+// Kubernetes cluster
+func (d Deployer) DeleteP(flags *pflag.FlagSet, args []string) {
+	shallowDryRun, err := flags.GetBool("shallow-dry-run")
+	cobra.CheckErr(err)
+	wg := sync.WaitGroup{}
+	wg.Add(len(args))
+	for _, arg := range args {
+		for _, dep := range d.HelmDeployer {
+			go func(dep HelmDeployment, arg string) {
+				if contains(strings.Split(dep.Option.Arguments, ", "), arg) {
+					cobra.CheckErr(dep.HelmCommand.UninstallP(shallowDryRun, &wg))
+				}
+			}(dep, arg)
+		}
+	}
+	wg.Wait()
 }
 
 // ValidDeployArgs loops over the DeployOptions for the Deployer and collects

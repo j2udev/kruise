@@ -18,7 +18,14 @@ func NewDeployCmd() *cobra.Command {
 			if err := cobra.OnlyValidArgs(cmd, args); err != nil {
 				return err
 			}
-			deployer.Deploy(cmd.Flags(), args)
+			flags := cmd.Flags()
+			parallel, err := flags.GetBool("parallel")
+			cobra.CheckErr(err)
+			if parallel {
+				deployer.DeployP(flags, args)
+			} else {
+				deployer.Deploy(flags, args)
+			}
 			return nil
 		},
 	}
@@ -31,6 +38,7 @@ func NewDeployCmd() *cobra.Command {
 	cmd.SetUsageFunc(UsageFunc(*kmd))
 	cmd.SetHelpFunc(HelpFunc(*kmd))
 	cmd.PersistentFlags().BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
+	cmd.PersistentFlags().BoolP("parallel", "P", false, "Delete the arguments in parallel")
 	//TODO: Cobra doesn't call initializers before the help flag attempts to
 	// render the usage. Try to find a way around this later, but for now rely on
 	// the help command instead of the flag for commands that can pass multiple
