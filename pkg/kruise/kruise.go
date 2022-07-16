@@ -36,7 +36,10 @@ func Initialize() {
 // NewCmd represents the kruise command
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kruise",
+		Use: "kruise",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			Initialize()
+		},
 		Short: "Kruise is a black-box CLI",
 		Long: `Kruise is a configurable CLI. It has a set of core commands whose
 options are determined by a config file.`,

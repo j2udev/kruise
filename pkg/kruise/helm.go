@@ -37,14 +37,18 @@ func GetHelmDeployments(key string) []HelmDeployment {
 
 // Install is used to install Helm charts in an abstract way
 func (helm *HelmCommand) Install(shallowDryRun bool) error {
-	checkHelm()
+	if !shallowDryRun {
+		checkHelm()
+	}
 	constructHelmInstallCommand(helm)
 	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
 }
 
 // Uninstall is used to install Helm charts in an abstract way
 func (helm *HelmCommand) Uninstall(shallowDryRun bool) error {
-	checkHelm()
+	if !shallowDryRun {
+		checkHelm()
+	}
 	constructHelmUninstallCommand(helm)
 	return ExecuteCommand(shallowDryRun, helm.Args[0], helm.Args[1:]...)
 }
@@ -78,7 +82,7 @@ func constructHelmUninstallCommand(helm *HelmCommand) {
 
 // checkHelm is used to verify that Helm is installed
 func checkHelm() {
-	helmCheck := exec.Command("command", "-v", "helm")
+	helmCheck := exec.Command("helm")
 	if err := helmCheck.Run(); err != nil {
 		log.Fatalf("%s", "Helm does not appear to be installed")
 	}
