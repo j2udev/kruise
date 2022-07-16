@@ -9,16 +9,17 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var kfg Konfig
 var deployer Deployer
 
-// Kommand is used to wrap cobra commands to support command options
-type Kommand struct {
-	Cmd  *cobra.Command
-	Opts *[]Option
-}
+// // Kommand is used to wrap cobra commands to support command options
+// type Kommand struct {
+// 	Cmd  *cobra.Command
+// 	Opts *[]Option
+// }
 
 // Initialize is used to initialize kruise configuration and command options
 func Initialize() {
@@ -33,23 +34,24 @@ func Initialize() {
 	deployer = NewDeployer()
 }
 
-// NewCmd represents the kruise command
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "kruise",
-		PreRun: func(cmd *cobra.Command, args []string) {
-			Initialize()
-		},
-		Short: "Kruise is a black-box CLI",
-		Long: `Kruise is a configurable CLI. It has a set of core commands whose
-options are determined by a config file.`,
-	}
-	cmd.AddCommand(
-		NewDeployCmd(),
-		NewDeleteCmd(),
-	)
-	cmd.PersistentFlags().StringVarP(&kfg.Metadata.Override, "config", "c", "", "Specify a custom config file (default is ~/.kruise.yaml)")
-	return cmd
+// NewKruiseKmd represents the kruise command
+func NewKruiseKmd() *Kommand {
+	kmd := NewKmd("kruise").
+		WithLongDescription(`Kruise is a configurable CLI. It has a set of core commands whose options are determined by a config file.`).
+		WithSubKommands(
+			NewDeployKmd(),
+			// NewDeleteKmd(),
+		).
+		WithPersistentFlags(NewKruisePersistentFlags()).
+		Version("0.1.0").
+		Build()
+	return &kmd
+}
+
+func NewKruisePersistentFlags() *pflag.FlagSet {
+	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
+	pfs.StringVarP(&kfg.Metadata.Override, "config", "c", "", "Specify a custom config file (default is ~/.kruise.yaml)")
+	return pfs
 }
 
 // ExecuteCommand is used as a repeatable means of calling CLI commands

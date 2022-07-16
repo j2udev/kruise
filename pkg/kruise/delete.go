@@ -29,16 +29,16 @@ func NewDeleteCmd() *cobra.Command {
 			return nil
 		},
 	}
-	kmd := &Kommand{
-		Cmd:  cmd,
-		Opts: &deployer.DeleteOptions,
-	}
-	cmd.SetUsageTemplate(UsageTemplate())
-	cmd.SetHelpTemplate(UsageTemplate())
-	cmd.SetUsageFunc(UsageFunc(*kmd))
-	cmd.SetHelpFunc(HelpFunc(*kmd))
-	cmd.PersistentFlags().BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
-	cmd.PersistentFlags().BoolP("parallel", "p", false, "Delete the arguments in parallel")
-	cmd.Flags().BoolP("help", "h", false, "show help for the deploy command")
+	// kmd := &Kommand{
+	// 	Cmd:  cmd,
+	// 	Opts: &deployer.DeleteOptions,
+	// }
+	// cmd.SetUsageTemplate(UsageTemplate())
+	// cmd.SetHelpTemplate(UsageTemplate())
+	// cmd.SetUsageFunc(UsageFunc(*kmd))
+	// cmd.SetHelpFunc(HelpFunc(*kmd))
+	// cmd.PersistentFlags().BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
+	// cmd.PersistentFlags().BoolP("parallel", "p", false, "Delete the arguments in parallel")
+	// cmd.Flags().BoolP("help", "h", false, "show help for the deploy command")
 	return cmd
 }

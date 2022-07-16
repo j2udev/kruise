@@ -7,5 +7,5 @@ import (
 
 func main() {
 	kruise.Initialize()
-	cobra.CheckErr(kruise.NewCmd().Execute())
+	cobra.CheckErr(kruise.NewKruiseKmd().Execute())
 }
