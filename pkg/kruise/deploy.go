@@ -55,7 +55,7 @@ func Install(f *pflag.FlagSet, i ...IInstaller) {
 				CheckErr(err)
 			}
 		})
-		HelmRepoUpdate(shallowDryRun)
+		CheckErr(HelmRepoUpdate(shallowDryRun))
 	}
 	if parallel {
 		wg := sync.WaitGroup{}
