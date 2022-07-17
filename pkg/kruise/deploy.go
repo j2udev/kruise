@@ -53,13 +53,17 @@ func Install(f *pflag.FlagSet, i ...IInstaller) {
 			wg.Add(1)
 			go func(h IInstaller) {
 				defer wg.Done()
-				h.Install(shallowDryRun)
+				if err := h.Install(shallowDryRun); err != nil {
+					CheckErr(err)
+				}
 			}(i)
 		})
 		wg.Wait()
 	} else {
 		funk.ForEach(i, func(i IInstaller) {
-			i.Install(shallowDryRun)
+			if err := i.Install(shallowDryRun); err != nil {
+				CheckErr(err)
+			}
 		})
 	}
 }

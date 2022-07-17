@@ -15,8 +15,10 @@ type (
 
 // Init is used to initialize Helm repositories
 func (h HelmDeployment) Init(shallowDryRun bool) error {
-	checkHelm()
-	b := NewCmd("helm init").WithArgs(constructHelmInitArgs(h))
+	if !shallowDryRun {
+		checkHelm()
+	}
+	b := NewCmd("helm").WithArgs(constructHelmInitArgs(h))
 	if shallowDryRun {
 		b = b.WithDryRun()
 	}
@@ -29,7 +31,7 @@ func (h HelmDeployment) Install(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
 	}
-	b := NewCmd("helm install").WithArgs(constructHelmInstallArgs(h))
+	b := NewCmd("helm").WithArgs(constructHelmInstallArgs(h))
 	if shallowDryRun {
 		b = b.WithDryRun()
 	}
@@ -42,7 +44,7 @@ func (h HelmDeployment) Uninstall(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
 	}
-	b := NewCmd("helm uninstall").WithArgs(constructHelmUninstallArgs(h))
+	b := NewCmd("helm").WithArgs(constructHelmUninstallArgs(h))
 	if shallowDryRun {
 		b = b.WithDryRun()
 	}
@@ -66,8 +68,8 @@ func constructHelmInitArgs(h HelmDeployment) []string {
 		log.Fatal("You must specify a Helm repository url")
 	}
 	args := []string{
-		"helm",
-		"repo", "add",
+		"repo",
+		"add",
 		r.RepoName,
 		r.RepoUrl,
 	}
@@ -83,7 +85,6 @@ func constructHelmInstallArgs(h HelmDeployment) []string {
 		log.Fatal("You must specify a Helm chart")
 	}
 	args := []string{
-		"helm",
 		"upgrade",
 		"--install",
 		h.ReleaseName,
@@ -117,7 +118,6 @@ func constructHelmUninstallArgs(h HelmDeployment) []string {
 		h.Namespace = "default"
 	}
 	args := []string{
-		"helm",
 		"uninstall",
 		h.ReleaseName,
 		"--namespace",

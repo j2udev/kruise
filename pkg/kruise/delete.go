@@ -32,13 +32,17 @@ func Uninstall(f *pflag.FlagSet, i ...IInstaller) {
 			wg.Add(1)
 			go func(h IInstaller) {
 				defer wg.Done()
-				h.Uninstall(shallowDryRun)
+				if err := h.Uninstall(shallowDryRun); err != nil {
+					CheckErr(err)
+				}
 			}(i)
 		})
 		wg.Wait()
 	} else {
 		funk.ForEach(i, func(i IInstaller) {
-			i.Uninstall(shallowDryRun)
+			if err := i.Uninstall(shallowDryRun); err != nil {
+				CheckErr(err)
+			}
 		})
 	}
 }
