@@ -11,7 +11,7 @@ func Initialize() {
 	home, err := os.UserHomeDir()
 	CheckErr(err)
 	file := &Kfg.Metadata
-	file.Paths = []string{home, home + ".config/kruise"}
+	file.Paths = []string{home, home + "/.config/kruise"}
 	file.Name = ".kruise"
 	file.Extension = "yaml"
 	Kfg.Initialize()

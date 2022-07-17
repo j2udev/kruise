@@ -3,6 +3,7 @@ package kruise
 import (
 	"log"
 	"os/exec"
+	"strings"
 
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 )
@@ -18,7 +19,7 @@ func (h HelmDeployment) Init(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
 	}
-	b := NewCmd("helm").WithArgs(constructHelmInitArgs(h))
+	b := NewCmd("helm").WithArgs(constructHelmInitArgs(h, shallowDryRun))
 	if shallowDryRun {
 		b = b.WithDryRun()
 	}
@@ -59,7 +60,19 @@ func checkHelm() {
 	}
 }
 
-func constructHelmInitArgs(h HelmDeployment) []string {
+func HelmRepoUpdate(shallowDryRun bool) error {
+	if !shallowDryRun {
+		checkHelm()
+	}
+	b := NewCmd("helm").WithArgs([]string{"repo", "update"})
+	if shallowDryRun {
+		b = b.WithDryRun()
+	}
+	cmd := b.Build()
+	return cmd.Execute()
+}
+
+func constructHelmInitArgs(h HelmDeployment, dryRun bool) []string {
 	r := h.HelmChart.Repository
 	if r.RepoName == "" {
 		log.Fatal("You must specify a Helm repository name")
@@ -72,8 +85,22 @@ func constructHelmInitArgs(h HelmDeployment) []string {
 		"add",
 		r.RepoName,
 		r.RepoUrl,
+		"--force-update",
 	}
-	// TODO: deal with private repositories
+	if h.Repository.PrivateRepo {
+		usernamePrompt := "Please enter username for " + h.Repository.RepoName + " repository"
+		passwordPrompt := "Please enter password for " + h.Repository.RepoName + " repository"
+		u, p, err := CredentialPrompt(usernamePrompt, passwordPrompt)
+		CheckErr(err)
+		if dryRun {
+			u = strings.Repeat("*", len(u))
+			p = strings.Repeat("*", len(p))
+		}
+		args = append(args,
+			"--username", u,
+			"--password", p,
+			"--pass-credentials")
+	}
 	return args
 }
 
@@ -91,7 +118,6 @@ func constructHelmInstallArgs(h HelmDeployment) []string {
 		h.ChartPath,
 		"--namespace",
 		h.Namespace,
-		"--create-namespace",
 	}
 	if h.Version != "" {
 		args = append(args, "--version", h.Version)

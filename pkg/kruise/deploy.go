@@ -47,6 +47,16 @@ func Install(f *pflag.FlagSet, i ...IInstaller) {
 	CheckErr(err)
 	parallel, err := f.GetBool("parallel")
 	CheckErr(err)
+	init, err := f.GetBool("init")
+	CheckErr(err)
+	if init {
+		funk.ForEach(i, func(i IInstaller) {
+			if err := i.(HelmDeployment).Init(shallowDryRun); err != nil {
+				CheckErr(err)
+			}
+		})
+		HelmRepoUpdate(shallowDryRun)
+	}
 	if parallel {
 		wg := sync.WaitGroup{}
 		funk.ForEach(i, func(i IInstaller) {

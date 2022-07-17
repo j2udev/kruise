@@ -35,5 +35,6 @@ func NewDeployFlags() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("deploy", pflag.ContinueOnError)
 	fs.BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
 	fs.BoolP("parallel", "p", false, "Delete the arguments in parallel")
+	fs.BoolP("init", "i", false, "Add Helm repositories for the specified options")
 	return fs
 }
