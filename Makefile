@@ -19,6 +19,6 @@ test:
 	go test ./... -v
 
 install:
-	cd cmd && go build -o /usr/local/bin/kruise && cd -
+	go build -o /usr/local/bin/kruise
 
 .PHONY: test
