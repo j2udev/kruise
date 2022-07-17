@@ -1,47 +1,69 @@
 package kruise
 
 import (
+	"strings"
+	"sync"
+
+	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/thoas/go-funk"
 )
 
-// NewDeployKmd represents the Kruise deploy command
-//
-// Options are dynamically populated from `deploy` config in the kruise manifest
-func NewDeployKmd() Kommand {
-	return NewKmd("deploy").
-		WithAliases([]string{"dep"}).
-		WithExample("kruise deploy kafka mongodb").
-		WithArgs(cobra.MinimumNArgs(1)).
-		// WithArgs(cobra.OnlyValidArgs).
-		// TODO: Dynamically populate valid deployment args from config
-		// WithValidArgs([]string{"jaeger", "kafka", "mongodb", "mysql"}).
-		WithArgAliases([]string{"mongo"}).
-		WithShortDescription("Deploy the specified options to your Kubernetes cluster").
-		WithOptions(deployer.DeployOptions).
-		WithRunEFunc(deploy).
-		WithFlags(NewDeployFlags()).
-		Build()
+func GetDeployOptions() []Option {
+	opts := GetHelmDeployOptions()
+	return opts
 }
 
-func NewDeployFlags() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("deploy", pflag.ContinueOnError)
-	fs.BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
-	fs.BoolP("parallel", "p", false, "Delete the arguments in parallel")
-	return fs
+func GetHelmDeployOptions() []Option {
+	deps := Kfg.GetDeployConfig()
+	return funk.Reduce(deps.Helm, func(acc []Option, h latest.HelmDeployment) []Option {
+		return append(acc, Option{h.Option})
+	}, []Option{}).([]Option)
 }
 
-func deploy(c *cobra.Command, args []string) error {
-	if err := cobra.OnlyValidArgs(c, args); err != nil {
-		return err
+func GetHelmDeployments() []HelmDeployment {
+	deps := Kfg.GetDeployConfig()
+	return funk.Map(deps.Helm, func(h latest.HelmDeployment) HelmDeployment {
+		return HelmDeployment{h}
+	}).([]HelmDeployment)
+}
+
+func GetValidDeployments(args []string) []IInstaller {
+	h := GetHelmDeployments()
+	var validDeployments []IInstaller
+	for _, dep := range h {
+		for _, arg := range args {
+			if funk.Contains(strings.Split(dep.Arguments, ", "), arg) {
+				validDeployments = append(validDeployments, dep)
+			}
+		}
 	}
-	flags := c.Flags()
-	parallel, err := flags.GetBool("parallel")
-	cobra.CheckErr(err)
+	return validDeployments
+}
+
+func Install(f *pflag.FlagSet, i ...IInstaller) {
+	shallowDryRun, err := f.GetBool("shallow-dry-run")
+	CheckErr(err)
+	parallel, err := f.GetBool("parallel")
+	CheckErr(err)
 	if parallel {
-		deployer.DeployP(flags, args)
+		wg := sync.WaitGroup{}
+		funk.ForEach(i, func(i IInstaller) {
+			wg.Add(1)
+			go func(h IInstaller) {
+				defer wg.Done()
+				h.Install(shallowDryRun)
+			}(i)
+		})
+		wg.Wait()
 	} else {
-		deployer.Deploy(flags, args)
+		funk.ForEach(i, func(i IInstaller) {
+			i.Install(shallowDryRun)
+		})
 	}
-	return nil
+}
+
+func Deploy(cmd *cobra.Command, args []string) {
+	Install(cmd.Flags(), GetValidDeployments(args)...)
 }

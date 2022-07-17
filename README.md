@@ -5,10 +5,10 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/j2udevelopment/kruise.svg)](https://pkg.go.dev/github.com/j2udevelopment/kruise)
 
 Kruise is still very much a work in progress. It is essentially a
-[black box](https://en.wikipedia.org/wiki/Black_box) command line interface
-(CLI). It has a set of core commands, whose options are dynamically configurable
-through a [kruise manifest file](examples/kruise.yaml). Because the CLI is
-driven by a config file, users can change kruise's behavior at runtime.
+[black box](https://en.wikipedia.org/wiki/Black_box) CLI. It has a set of core
+commands, whose options are dynamically configurable through a
+[kruise manifest file](examples/kruise.yaml). Because the CLI is driven by a
+config file, users can change kruise's behavior at runtime.
 
 Consider you are consulting for two separate product teams. Team A deploys
 MongoDB and Kafka Helm charts, while team B deploys MongoDB (at a different
@@ -23,7 +23,11 @@ deploy:
         - option:
               arguments: "kafka"
               description: "Deploys Kafka to your Kubernetes cluster"
-          command:
+          chart:
+              repository:
+                  name: bitnami
+                  url: https://charts.bitnami.com/bitnami
+                  private: false
               releaseName: kafka
               chartPath: bitnami/kafka
               namespace: kafka
@@ -33,7 +37,11 @@ deploy:
         - option:
               arguments: "mongodb, mongo"
               description: "Deploys MongoDB to your Kubernetes cluster"
-          command:
+          chart:
+              repository:
+                  name: bitnami
+                  url: https://charts.bitnami.com/bitnami
+                  private: false
               releaseName: mongodb
               chartPath: bitnami/mongodb
               namespace: mongodb
@@ -45,14 +53,14 @@ delete:
         - option:
               arguments: "kafka"
               description: "Deletes Kafka from your Kubernetes cluster"
-          command:
+          chart:
               releaseName: kafka
               chartPath: bitnami/kafka
               namespace: kafka
         - option:
               arguments: "mongodb, mongo"
               description: "Deletes MongoDB from your Kubernetes cluster"
-          command:
+          chart:
               releaseName: mongodb
               chartPath: bitnami/mongodb
               namespace: mongodb
@@ -66,7 +74,11 @@ deploy:
         - option:
               arguments: "jaeger"
               description: "Deploys Jaeger to your Kubernetes cluster"
-          command:
+          chart:
+              repository:
+                  name: jaegertracing
+                  url: https://jaegertracing.github.io/helm-charts
+                  private: false
               releaseName: jaeger
               chartPath: jaegertracing/jaeger
               namespace: observability
@@ -76,7 +88,11 @@ deploy:
         - option:
               arguments: "mongodb, mongo"
               description: "Deploys MongoDB to your Kubernetes cluster"
-          command:
+          chart:
+              repository:
+                  name: bitnami
+                  url: https://charts.bitnami.com/bitnami
+                  private: false
               releaseName: mongodb
               chartPath: bitnami/mongodb
               namespace: mongodb
@@ -88,14 +104,14 @@ delete:
         - option:
               arguments: "jaeger"
               description: "Deletes Jaeger from your Kubernetes cluster"
-          command:
+          chart:
               releaseName: jaeger
               chartPath: jaegertracing/jaeger
               namespace: observability
         - option:
               arguments: "mongodb, mongo"
               description: "Deletes MongoDB from your Kubernetes cluster"
-          command:
+          chart:
               releaseName: mongodb
               chartPath: bitnami/mongodb
               namespace: mongodb

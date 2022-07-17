@@ -1,44 +1,48 @@
 package kruise
 
 import (
+	"sync"
+
+	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/thoas/go-funk"
 )
 
-// NewDeleteCmd represents the delete command
-// options are dynamically populated from `delete` config in the kruise manifest
-func NewDeleteCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "delete",
-		Short: "Delete the specified options from your Kubernetes cluster",
-		Args:  cobra.MinimumNArgs(1),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.ValidArgs = deployer.ValidDeleteArgs()
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := cobra.OnlyValidArgs(cmd, args); err != nil {
-				return err
-			}
-			flags := cmd.Flags()
-			parallel, err := flags.GetBool("parallel")
-			cobra.CheckErr(err)
-			if parallel {
-				deployer.DeleteP(flags, args)
-			} else {
-				deployer.Delete(flags, args)
-			}
-			return nil
-		},
+func GetDeleteOptions() []Option {
+	opts := GetHelmDeleteOptions()
+	return opts
+}
+
+func GetHelmDeleteOptions() []Option {
+	deps := Kfg.GetDeleteConfig()
+	return funk.Reduce(deps.Helm, func(acc []Option, h latest.HelmDeployment) []Option {
+		return append(acc, Option{h.Option})
+	}, []Option{}).([]Option)
+}
+
+func Uninstall(f *pflag.FlagSet, i ...IInstaller) {
+	shallowDryRun, err := f.GetBool("shallow-dry-run")
+	CheckErr(err)
+	parallel, err := f.GetBool("parallel")
+	CheckErr(err)
+	if parallel {
+		wg := sync.WaitGroup{}
+		funk.ForEach(i, func(i IInstaller) {
+			wg.Add(1)
+			go func(h IInstaller) {
+				defer wg.Done()
+				h.Uninstall(shallowDryRun)
+			}(i)
+		})
+		wg.Wait()
+	} else {
+		funk.ForEach(i, func(i IInstaller) {
+			i.Uninstall(shallowDryRun)
+		})
 	}
-	// kmd := &Kommand{
-	// 	Cmd:  cmd,
-	// 	Opts: &deployer.DeleteOptions,
-	// }
-	// cmd.SetUsageTemplate(UsageTemplate())
-	// cmd.SetHelpTemplate(UsageTemplate())
-	// cmd.SetUsageFunc(UsageFunc(*kmd))
-	// cmd.SetHelpFunc(HelpFunc(*kmd))
-	// cmd.PersistentFlags().BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
-	// cmd.PersistentFlags().BoolP("parallel", "p", false, "Delete the arguments in parallel")
-	// cmd.Flags().BoolP("help", "h", false, "show help for the deploy command")
-	return cmd
+}
+
+func Delete(cmd *cobra.Command, args []string) {
+	Uninstall(cmd.Flags(), GetValidDeployments(args)...)
 }

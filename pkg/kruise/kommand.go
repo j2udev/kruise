@@ -1,6 +1,7 @@
 package kruise
 
 import (
+	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/thoas/go-funk"
@@ -10,6 +11,10 @@ type (
 	Kommand struct {
 		Cmd  *cobra.Command
 		Opts *[]Option
+	}
+
+	Option struct {
+		latest.Option
 	}
 
 	KommandBuilder struct {
@@ -49,7 +54,6 @@ type (
 	}
 )
 
-// NewKmd is used to create a new IKommandBuilder
 func NewKmd(name string) IKommandBuilder {
 	cmd := cobra.Command{
 		Use: name,
@@ -216,6 +220,6 @@ func (b *KommandBuilder) Build() Kommand {
 	}
 }
 
-func (k *Kommand) Execute() error {
+func (k Kommand) Execute() error {
 	return k.Cmd.Execute()
 }

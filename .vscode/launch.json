@@ -5,20 +5,30 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Kruise",
+      "name": "kruise",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/main.go",
+      "program": "${workspaceFolder}/main.go",
       "args": [],
       "console": "integratedTerminal"
     },
+
     {
-      "name": "Kruise dry-run",
+      "name": "kruise deploy",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/main.go",
+      "program": "${workspaceFolder}/main.go",
+      "args": ["deploy"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "kruise dry-run",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/main.go",
       "args": [
         "${input:command}",
         "${input:arg}",

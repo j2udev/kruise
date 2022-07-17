@@ -3,17 +3,30 @@ deploy:
     - option:
         arguments: "jaeger"
         description: "Deploys Jaeger to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://jaegertracing.github.io/helm-charts"
+          name: jaegertracing
+          private: false
+        chartName: jaeger
         releaseName: jaeger
         chartPath: jaegertracing/jaeger
         namespace: observability
         version: 0.39.5
         values:
           - /path/to/values/jaeger/jaeger-values.yaml
+        setValues:
+          - "image=test:0.1.0"
+        installArgs:
+        - "--create-namespace"
     - option:
         arguments: "kafka"
         description: "Deploys Kafka to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://charts.bitnami.com/bitnami"
+          name: bitnami
+          private: false
         releaseName: kafka
         chartPath: bitnami/kafka
         namespace: kafka
@@ -23,7 +36,11 @@ deploy:
     - option:
         arguments: "mongodb, mongo"
         description: "Deploys MongoDB to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://charts.bitnami.com/bitnami"
+          name: bitnami
+          private: false
         releaseName: mongodb
         chartPath: bitnami/mongodb
         namespace: mongodb
@@ -33,7 +50,11 @@ deploy:
     - option:
         arguments: "mysql"
         description: "Deploys MySQL to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://charts.bitnami.com/bitnami"
+          name: bitnami
+          private: false
         releaseName: mysql
         chartPath: bitnami/mysql
         namespace: mysql
@@ -43,7 +64,11 @@ deploy:
     - option:
         arguments: "postgresql, postgres"
         description: "Deploys PostgreSQL to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://charts.bitnami.com/bitnami"
+          name: bitnami
+          private: false
         releaseName: postgresql
         chartPath: bitnami/postgresql
         namespace: postgresql
@@ -53,7 +78,11 @@ deploy:
     - option:
         arguments: "prometheus-operator, prom-op"
         description: "Deploys Prometheus Operator to your Kubernetes cluster"
-      command:
+      chart:
+        repository:
+          url: "https://prometheus-community.github.io/helm-charts"
+          name: prometheus-community
+          private: false
         releaseName: prometheus-operator
         chartPath: prometheus-community/kube-prometheus-stack
         namespace: monitoring
@@ -65,42 +94,42 @@ delete:
     - option:
         arguments: "jaeger"
         description: "Deletes Jaeger from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: jaeger
         chartPath: jaegertracing/jaeger
         namespace: observability
     - option:
         arguments: "kafka"
         description: "Deletes Kafka from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: kafka
         chartPath: bitnami/kafka
         namespace: kafka
     - option:
         arguments: "mongodb, mongo"
         description: "Deletes MongoDB from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: mongodb
         chartPath: bitnami/mongodb
         namespace: mongodb
     - option:
         arguments: "mysql"
         description: "Deletes MySQL from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: mysql
         chartPath: bitnami/mysql
         namespace: mysql
     - option:
         arguments: "postgresql, postgres"
         description: "Deletes PostgreSQL from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: postgresql
         chartPath: bitnami/postgresql
         namespace: postgresql
     - option:
         arguments: "prometheus-operator, prom-op"
         description: "Deletes Prometheus Operator from your Kubernetes cluster"
-      command:
+      chart:
         releaseName: prometheus-operator
         chartPath: prometheus-community/kube-prometheus-stack
         namespace: monitoring
