@@ -11,9 +11,8 @@ func NewDeleteKmd() kruise.Kommand {
 	return kruise.NewKmd("delete").
 		WithAliases([]string{"del"}).
 		WithExample("kruise delete kafka mongodb").
-		WithArgs(cobra.MinimumNArgs(1)).
-		// TODO: Dynamically populate valid deployment args from config
-		// WithValidArgs([]string{"jaeger", "kafka", "mongodb", "mysql"}).
+		WithArgs(cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs)).
+		WithValidArgs(kruise.GetValidDeleteArgs()).
 		WithShortDescription("Delete the specified options from your Kubernetes cluster").
 		WithOptions(NewDeleteOptions()).
 		WithRunFunc(kruise.Delete).

@@ -11,9 +11,8 @@ func NewDeployKmd() kruise.Kommand {
 	return kruise.NewKmd("deploy").
 		WithAliases([]string{"dep"}).
 		WithExample("kruise deploy kafka mongodb").
-		WithArgs(cobra.MinimumNArgs(1)).
-		// TODO: Dynamically populate valid deployment args from config
-		// WithValidArgs([]string{"jaeger", "kafka", "mongodb", "mysql"}).
+		WithArgs(cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs)).
+		WithValidArgs(kruise.GetValidDeployArgs()).
 		WithShortDescription("Deploy the specified options to your Kubernetes cluster").
 		WithOptions(NewDeployOptions()).
 		WithRunFunc(kruise.Deploy).

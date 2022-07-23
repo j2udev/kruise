@@ -4,7 +4,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/thoas/go-funk"
@@ -16,23 +15,23 @@ func GetDeployOptions() []Option {
 }
 
 func GetHelmDeployOptions() []Option {
-	deps := Kfg.GetDeployConfig()
-	return funk.Reduce(deps.Helm, func(acc []Option, h latest.HelmDeployment) []Option {
-		return append(acc, Option{h.Option})
-	}, []Option{}).([]Option)
+	var opts []Option
+	deps := NewHelmDeployments(Kfg.Manifest.Deploy.Helm)
+	for _, dep := range deps {
+		opts = append(opts, NewOption(dep.Option))
+	}
+	return opts
 }
 
-func GetHelmDeployments() []HelmDeployment {
-	deps := Kfg.GetDeployConfig()
-	return funk.Map(deps.Helm, func(h latest.HelmDeployment) HelmDeployment {
-		return HelmDeployment{h}
-	}).([]HelmDeployment)
+func GetValidDeployArgs() []string {
+	args := GetValidArgs(GetDeployOptions())
+	return args
 }
 
 func GetValidDeployments(args []string) []IInstaller {
-	h := GetHelmDeployments()
 	var validDeployments []IInstaller
-	for _, dep := range h {
+	deps := NewHelmDeployments(Kfg.Manifest.Deploy.Helm)
+	for _, dep := range deps {
 		for _, arg := range args {
 			if funk.Contains(strings.Split(dep.Arguments, ", "), arg) {
 				validDeployments = append(validDeployments, dep)

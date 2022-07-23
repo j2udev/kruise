@@ -1,11 +1,12 @@
 package latest
 
-import (
-	"errors"
+import "github.com/j2udevelopment/kruise/pkg/kruise/schema/version"
 
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema"
-	"github.com/thoas/go-funk"
-)
+var Version = "v1alpha1"
+
+func NewKruiseConfig() version.IVersionedConfig {
+	return new(KruiseConfig)
+}
 
 type (
 	KruiseConfig struct {
@@ -50,9 +51,6 @@ type (
 	}
 )
 
-func (c KruiseConfig) GetVersion() (string, error) {
-	if funk.Contains(schema.Versions, c.APIVersion) {
-		return c.APIVersion, nil
-	}
-	return "", errors.New("invalid APIVersion")
+func (c *KruiseConfig) GetVersion() string {
+	return c.APIVersion
 }

@@ -20,7 +20,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/main.go",
-      "args": ["deploy"],
+      "args": ["deploy", "blah"],
       "console": "integratedTerminal"
     },
     {

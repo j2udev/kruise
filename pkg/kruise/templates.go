@@ -4,7 +4,7 @@ package kruise
 // options
 func UsageTemplate() string {
 	return `Usage:{{if .Cmd.Runnable}}
-  {{.Cmd.UseLine}}{{end}}{{if .Cmd.HasAvailableSubCommands}}
+  {{.Cmd.UseLine}}{{end}} [options]{{if .Cmd.HasAvailableSubCommands}}
   {{.Cmd.CommandPath}} [command]{{end}}{{if gt (len .Cmd.Aliases) 0}}
 
 Aliases:

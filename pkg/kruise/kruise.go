@@ -1,18 +1,26 @@
 package kruise
 
 import (
-	"os"
+	"github.com/sirupsen/logrus"
 )
 
-var Kfg Konfig
+var Kfg *Konfig
+var Logger *logrus.Logger
 
-// Initialize is used to initialize kruise configuration and command options
+// Initialize is used to initialize Kruise
 func Initialize() {
-	home, err := os.UserHomeDir()
-	CheckErr(err)
-	file := &Kfg.Metadata
-	file.Paths = []string{home, home + "/.config/kruise"}
-	file.Name = ".kruise"
-	file.Extension = "yaml"
+	InitializeLogger()
+	InitializeConfig()
+}
+
+// InitializeConfig is used to initialize Kruise configuration
+func InitializeConfig() {
+	Kfg = NewKonfig()
 	Kfg.Initialize()
+}
+
+// InitializeLogger is used to initialize the Kruise logger
+func InitializeLogger() {
+	logger := logrus.New()
+	Logger = logger
 }

@@ -3,7 +3,6 @@ package kruise
 import (
 	"sync"
 
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/thoas/go-funk"
@@ -15,10 +14,17 @@ func GetDeleteOptions() []Option {
 }
 
 func GetHelmDeleteOptions() []Option {
-	deps := Kfg.GetDeleteConfig()
-	return funk.Reduce(deps.Helm, func(acc []Option, h latest.HelmDeployment) []Option {
-		return append(acc, Option{h.Option})
-	}, []Option{}).([]Option)
+	var opts []Option
+	deps := NewHelmDeployments(Kfg.Manifest.Delete.Helm)
+	for _, dep := range deps {
+		opts = append(opts, NewOption(dep.Option))
+	}
+	return opts
+}
+
+func GetValidDeleteArgs() []string {
+	args := GetValidArgs(GetDeleteOptions())
+	return args
 }
 
 func Uninstall(f *pflag.FlagSet, i ...IInstaller) {

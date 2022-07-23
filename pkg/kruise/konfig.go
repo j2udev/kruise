@@ -5,27 +5,40 @@ import (
 	"log"
 	"os"
 
+	"github.com/adrg/xdg"
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/viper"
 )
 
-// Konfig struct used to combine file metadata with unmarshalled Kruise
-// configuration
-type Konfig struct {
-	Metadata Metadata
-	Manifest latest.KruiseConfig
-}
+type (
+	// Konfig struct used to combine file metadata with unmarshalled Kruise
+	// configuration
+	Konfig struct {
+		Metadata Metadata
+		Manifest latest.KruiseConfig
+	}
 
-// Metadata struct used to capture config file information to be passed to viper
-type Metadata struct {
-	Paths     []string
-	Extension string
-	Name      string
-	Override  string
-}
+	// Metadata struct used to capture config file information to be passed to viper
+	Metadata struct {
+		Paths     []string
+		Extension string
+		Name      string
+		Override  string
+	}
+)
 
-type Deployments struct {
-	latest.Deployments
+func NewKonfig() *Konfig {
+	cfg := new(Konfig)
+	meta := Metadata{
+		Paths: []string{
+			xdg.ConfigHome + "/kruise",
+			xdg.Home,
+		},
+		Name:      ".kruise",
+		Extension: "yaml",
+	}
+	cfg.Metadata = meta
+	return cfg
 }
 
 // Initialize reads in a configuration file that is passed to viper and
@@ -53,10 +66,10 @@ func (kfg *Konfig) Initialize() {
 	}
 }
 
-func (kfg Konfig) GetDeployConfig() Deployments {
-	return Deployments{kfg.Manifest.Deploy}
-}
+// func (kfg Konfig) GetDeployConfig() Deployments {
+// 	return Deployments{kfg.Manifest.Deploy}
+// }
 
-func (kfg Konfig) GetDeleteConfig() Deployments {
-	return Deployments{kfg.Manifest.Delete}
-}
+// func (kfg Konfig) GetDeleteConfig() Deployments {
+// 	return Deployments{kfg.Manifest.Delete}
+// }

@@ -8,11 +8,19 @@ import (
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 )
 
-type (
-	HelmDeployment struct {
-		latest.HelmDeployment
+type HelmDeployment latest.HelmDeployment
+
+func NewHelmDeployment(dep latest.HelmDeployment) HelmDeployment {
+	return HelmDeployment(dep)
+}
+
+func NewHelmDeployments(deps []latest.HelmDeployment) []HelmDeployment {
+	var d []HelmDeployment
+	for _, dep := range deps {
+		d = append(d, NewHelmDeployment(dep))
 	}
-)
+	return d
+}
 
 // Init is used to initialize Helm repositories
 func (h HelmDeployment) Init(shallowDryRun bool) error {

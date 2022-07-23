@@ -1,7 +1,6 @@
 package kruise
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/thoas/go-funk"
@@ -11,10 +10,6 @@ type (
 	Kommand struct {
 		Cmd  *cobra.Command
 		Opts *[]Option
-	}
-
-	Option struct {
-		latest.Option
 	}
 
 	KommandBuilder struct {
