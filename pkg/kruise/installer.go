@@ -4,17 +4,17 @@ import (
 	"sync"
 
 	"github.com/spf13/pflag"
-	"github.com/thoas/go-funk"
 )
 
 type (
 	IInstaller interface {
+		Init(dryRun bool) error
 		Install(dryRun bool) error
 		Uninstall(dryRun bool) error
 	}
 )
 
-func Install(f *pflag.FlagSet, i ...IInstaller) {
+func Install(f *pflag.FlagSet, installer ...IInstaller) {
 	shallowDryRun, err := f.GetBool("shallow-dry-run")
 	Fatal(err)
 	parallel, err := f.GetBool("parallel")
@@ -22,56 +22,72 @@ func Install(f *pflag.FlagSet, i ...IInstaller) {
 	init, err := f.GetBool("init")
 	Fatal(err)
 	if init {
-		funk.ForEach(i, func(i IInstaller) {
-			if err := i.(HelmDeployment).Init(shallowDryRun); err != nil {
+		for _, i := range installer {
+			if err := i.Init(shallowDryRun); err != nil {
 				Fatal(err)
 			}
-		})
+		}
 		Fatal(HelmRepoUpdate(shallowDryRun))
 	}
 	if parallel {
+		Logger.Trace("Running in parallel")
 		wg := sync.WaitGroup{}
-		funk.ForEach(i, func(i IInstaller) {
+		for _, i := range installer {
 			wg.Add(1)
-			go func(h IInstaller) {
-				defer wg.Done()
-				if err := h.Install(shallowDryRun); err != nil {
-					Fatal(err)
-				}
-			}(i)
-		})
+			go installp(i, shallowDryRun, &wg)
+		}
 		wg.Wait()
+		Logger.Trace("Finished running in parallel")
 	} else {
-		funk.ForEach(i, func(i IInstaller) {
-			if err := i.Install(shallowDryRun); err != nil {
-				Fatal(err)
-			}
-		})
+		Logger.Trace("Running sequentially")
+		for _, i := range installer {
+			install(i, shallowDryRun)
+		}
+		Logger.Trace("Finished running sequentially")
 	}
 }
 
-func Uninstall(f *pflag.FlagSet, i ...IInstaller) {
+func Uninstall(f *pflag.FlagSet, installer ...IInstaller) {
 	shallowDryRun, err := f.GetBool("shallow-dry-run")
 	Fatal(err)
 	parallel, err := f.GetBool("parallel")
 	Fatal(err)
 	if parallel {
 		wg := sync.WaitGroup{}
-		funk.ForEach(i, func(i IInstaller) {
+		for _, i := range installer {
 			wg.Add(1)
-			go func(h IInstaller) {
-				defer wg.Done()
-				if err := h.Uninstall(shallowDryRun); err != nil {
-					Fatal(err)
-				}
-			}(i)
-		})
+			go uninstallp(i, shallowDryRun, &wg)
+		}
 		wg.Wait()
 	} else {
-		funk.ForEach(i, func(i IInstaller) {
-			if err := i.Uninstall(shallowDryRun); err != nil {
-				Fatal(err)
-			}
-		})
+		for _, i := range installer {
+			uninstall(i, shallowDryRun)
+		}
+	}
+}
+
+func install(i IInstaller, s bool) {
+	if err := i.Install(s); err != nil {
+		Fatal(err)
+	}
+}
+
+func installp(i IInstaller, s bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := i.Install(s); err != nil {
+		Fatal(err)
+	}
+}
+
+func uninstall(i IInstaller, s bool) {
+	if err := i.Uninstall(s); err != nil {
+		Fatal(err)
+	}
+}
+
+func uninstallp(i IInstaller, s bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := i.Uninstall(s); err != nil {
+		Fatal(err)
 	}
 }
