@@ -190,11 +190,13 @@ func (b *KommandBuilder) WithHelpFunc(function func(*cobra.Command, []string)) I
 }
 
 func (b *KommandBuilder) WithKruiseTemplate() IKommandBuilder {
-	b.WithUsageTemplate(UsageTemplate()).
-		WithHelpTemplate(UsageTemplate())
+	// b.WithUsageTemplate(UsageTemplate()).
+	// 	WithHelpTemplate(UsageTemplate())
 	kmd := b.Build()
-	b.WithUsageFunc(UsageFunc(kmd)).
-		WithHelpFunc(HelpFunc(kmd))
+	b.WithUsageFunc(kmd.UsageFunc()).
+		WithHelpFunc(kmd.HelpFunc())
+	// b.WithUsageFunc(UsageFunc(kmd)).
+	// 	WithHelpFunc(HelpFunc(kmd))
 	return b
 }
 
@@ -213,6 +215,56 @@ func (b *KommandBuilder) Build() Kommand {
 		Cmd:  b.Cmd,
 		Opts: b.Opts,
 	}
+}
+
+// UsageFunc overrides the default UsageFunc used by Cobra to facilitate showing command options
+func (k Kommand) UsageFunc() (f func(*cobra.Command) error) {
+	return func(c *cobra.Command) error {
+		err := tmpl(c.OutOrStderr(), k.UsageTemplate(), k)
+		if err != nil {
+			c.PrintErrln(err)
+		}
+		return err
+	}
+}
+
+// HelpFunc overrides the default HelpFunc used by Cobra to facilitate showing command options
+func (k Kommand) HelpFunc() func(*cobra.Command, []string) {
+	return func(c *cobra.Command, s []string) {
+		err := tmpl(c.OutOrStderr(), k.UsageTemplate(), k)
+		if err != nil {
+			c.PrintErrln(err)
+		}
+	}
+}
+
+// UsageTemplate is used to override the cobra UsageTemplate to facilitate
+// options
+func (k Kommand) UsageTemplate() string {
+	return `Usage:{{if .Cmd.Runnable}}
+  {{.Cmd.UseLine}}{{end}} [options]{{if .Cmd.HasAvailableSubCommands}}
+  {{.Cmd.CommandPath}} [command]{{end}}{{if gt (len .Cmd.Aliases) 0}}
+
+Aliases:
+  {{.Cmd.NameAndAliases}}{{end}}{{if .Cmd.HasExample}}
+
+Examples:
+{{.Cmd.Example}}{{end}}
+
+Available Options:{{range .Opts }}
+  {{.Arguments}}	{{.Description}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
+
+Flags:
+{{.Cmd.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .Cmd.HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.Cmd.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .Cmd.HasHelpSubCommands}}
+
+Additional help topics:{{range .Cmd.Commands}}{{if .Cmd.IsAdditionalHelpTopicCommand}}
+  {{rpad .Cmd.CommandPath .Cmd.CommandPathPadding}} {{.Cmd.Short}}{{end}}{{end}}{{end}}{{if .Cmd.HasAvailableSubCommands}}
+
+Use "{{.Cmd.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
 }
 
 func (k Kommand) Execute() error {

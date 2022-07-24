@@ -30,21 +30,25 @@ type (
 	}
 )
 
+// NewCmd creates a new CommandBuilder for executing CLI commands
 func NewCmd(name string) ICommandBuilder {
 	cmd := Command{Name: name, DryRun: false}
 	return CommandBuilder{cmd}
 }
 
+// WithArgs adds arguments to the CLI command
 func (c CommandBuilder) WithArgs(args []string) ICommandBuilder {
 	c.Args = args
 	return c
 }
 
+// WithDryRun prints the command instead of executing it when Execute() is called
 func (c CommandBuilder) WithDryRun() ICommandBuilder {
 	c.DryRun = true
 	return c
 }
 
+// Build builds the CommandBuilder into a Command
 func (c CommandBuilder) Build() ICommand {
 	return Command{
 		Name:   c.Name,
@@ -53,6 +57,7 @@ func (c CommandBuilder) Build() ICommand {
 	}
 }
 
+// Execute either executes the CLI command or prints it
 func (c Command) Execute() error {
 	cmd := exec.Command(c.Name, c.Args...)
 	if c.DryRun {
@@ -62,7 +67,7 @@ func (c Command) Execute() error {
 		stdout, _ := cmd.StdoutPipe()
 		if err := cmd.Start(); err != nil {
 			log.Printf("%s", err)
-			CheckErr(cmd.Wait())
+			Fatal(cmd.Wait())
 			return err
 		}
 		cmdErr, _ := io.ReadAll(stderr)
@@ -72,7 +77,7 @@ func (c Command) Execute() error {
 			return errors.New(string(cmdErr))
 		}
 		fmt.Printf("%s", cmdOut)
-		CheckErr(cmd.Wait())
+		Fatal(cmd.Wait())
 	}
 	return nil
 }

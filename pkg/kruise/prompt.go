@@ -25,11 +25,11 @@ func CredentialPrompt(usernamePrompt string, passwordPrompt string) (username st
 		Mask:     '*',
 	}
 	username, err = u.Run()
-	CheckErr(err)
+	Fatal(err)
 	password, err = p.Run()
-	CheckErr(err)
+	Fatal(err)
 	validationPassword, err := c.Run()
-	CheckErr(err)
+	Fatal(err)
 	if password != validationPassword {
 		return "", "", fmt.Errorf("passwords do not match")
 	}

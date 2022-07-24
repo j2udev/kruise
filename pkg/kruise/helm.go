@@ -10,10 +10,14 @@ import (
 
 type HelmDeployment latest.HelmDeployment
 
+// NewHelmDeployment is a helper function for dealing with the latest.HelmDeployment
+// to HelmDeployment type definition
 func NewHelmDeployment(dep latest.HelmDeployment) HelmDeployment {
 	return HelmDeployment(dep)
 }
 
+// NewHelmDeployments is a helper function for dealing with the latest.HelmDeployment
+// to HelmDeployment type definition
 func NewHelmDeployments(deps []latest.HelmDeployment) []HelmDeployment {
 	var d []HelmDeployment
 	for _, dep := range deps {
@@ -35,7 +39,7 @@ func (h HelmDeployment) Init(shallowDryRun bool) error {
 	return cmd.Execute()
 }
 
-// Install is ues to install/upgrade a Helm deployment
+// Install is used to install/upgrade a Helm deployment
 func (h HelmDeployment) Install(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
@@ -48,7 +52,7 @@ func (h HelmDeployment) Install(shallowDryRun bool) error {
 	return cmd.Execute()
 }
 
-// Uninstall is ues to uninstall a Helm deployment
+// Uninstall is used to uninstall a Helm deployment
 func (h HelmDeployment) Uninstall(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
@@ -61,13 +65,6 @@ func (h HelmDeployment) Uninstall(shallowDryRun bool) error {
 	return cmd.Execute()
 }
 
-func checkHelm() {
-	helmCheck := exec.Command("helm")
-	if err := helmCheck.Run(); err != nil {
-		log.Fatalf("%s", "Helm does not appear to be installed")
-	}
-}
-
 func HelmRepoUpdate(shallowDryRun bool) error {
 	if !shallowDryRun {
 		checkHelm()
@@ -78,6 +75,11 @@ func HelmRepoUpdate(shallowDryRun bool) error {
 	}
 	cmd := b.Build()
 	return cmd.Execute()
+}
+
+func checkHelm() {
+	err := exec.Command("helm").Run()
+	Fatalf(err, "Helm does not appear to be installed")
 }
 
 func constructHelmInitArgs(h HelmDeployment, dryRun bool) []string {
@@ -99,7 +101,7 @@ func constructHelmInitArgs(h HelmDeployment, dryRun bool) []string {
 		usernamePrompt := "Please enter username for " + h.Repository.RepoName + " repository"
 		passwordPrompt := "Please enter password for " + h.Repository.RepoName + " repository"
 		u, p, err := CredentialPrompt(usernamePrompt, passwordPrompt)
-		CheckErr(err)
+		Fatal(err)
 		if dryRun {
 			u = strings.Repeat("*", len(u))
 			p = strings.Repeat("*", len(p))
