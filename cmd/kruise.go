@@ -46,7 +46,7 @@ func setLogLevel(cmd *cobra.Command, args []string) {
 // See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
 func NewKruisePersistentFlags() *pflag.FlagSet {
 	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
-	pfs.StringVarP(&kruise.Kfg.Metadata.Override, "config", "c", "", "specify a path to a kruise manifest file")
+	pfs.StringVarP(&kruise.Kfg.Metadata.Override, "config", "C", "", "specify a path to a kruise manifest file")
 	pfs.StringP("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)")
 	return pfs
 }
