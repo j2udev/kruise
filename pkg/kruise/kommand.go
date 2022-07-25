@@ -1,6 +1,9 @@
 package kruise
 
 import (
+	"os"
+	"text/tabwriter"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/thoas/go-funk"
@@ -190,13 +193,9 @@ func (b *KommandBuilder) WithHelpFunc(function func(*cobra.Command, []string)) I
 }
 
 func (b *KommandBuilder) WithKruiseTemplate() IKommandBuilder {
-	// b.WithUsageTemplate(UsageTemplate()).
-	// 	WithHelpTemplate(UsageTemplate())
 	kmd := b.Build()
 	b.WithUsageFunc(kmd.UsageFunc()).
 		WithHelpFunc(kmd.HelpFunc())
-	// b.WithUsageFunc(UsageFunc(kmd)).
-	// 	WithHelpFunc(HelpFunc(kmd))
 	return b
 }
 
@@ -220,7 +219,8 @@ func (b *KommandBuilder) Build() Kommand {
 // UsageFunc overrides the default UsageFunc used by Cobra to facilitate showing command options
 func (k Kommand) UsageFunc() (f func(*cobra.Command) error) {
 	return func(c *cobra.Command) error {
-		err := tmpl(c.OutOrStderr(), k.UsageTemplate(), k)
+		w := tabwriter.NewWriter(os.Stdout, 8, 8, 8, ' ', 0)
+		err := tmpl(w, k.UsageTemplate(), k)
 		if err != nil {
 			c.PrintErrln(err)
 		}
@@ -231,7 +231,8 @@ func (k Kommand) UsageFunc() (f func(*cobra.Command) error) {
 // HelpFunc overrides the default HelpFunc used by Cobra to facilitate showing command options
 func (k Kommand) HelpFunc() func(*cobra.Command, []string) {
 	return func(c *cobra.Command, s []string) {
-		err := tmpl(c.OutOrStderr(), k.UsageTemplate(), k)
+		w := tabwriter.NewWriter(os.Stdout, 3, 3, 3, ' ', 0)
+		err := tmpl(w, k.UsageTemplate(), k)
 		if err != nil {
 			c.PrintErrln(err)
 		}
