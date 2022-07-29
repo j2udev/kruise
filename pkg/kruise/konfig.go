@@ -1,8 +1,6 @@
 package kruise
 
 import (
-	"fmt"
-	"log"
 	"os"
 
 	"github.com/adrg/xdg"
@@ -10,66 +8,81 @@ import (
 	"github.com/spf13/viper"
 )
 
-type (
-	// Konfig struct used to combine file metadata with unmarshalled Kruise
-	// configuration
-	Konfig struct {
-		Metadata Metadata
-		Manifest latest.KruiseConfig
-	}
-
-	// Metadata struct used to capture config file information to be passed to viper
-	Metadata struct {
-		Paths     []string
-		Extension string
-		Name      string
-		Override  string
-	}
-)
+// Konfig struct used to combine file metadata with unmarshalled Kruise
+// configuration
+type Konfig struct {
+	Files    []string
+	Override string
+	Manifest latest.KruiseConfig
+}
 
 func NewKonfig() *Konfig {
 	cfg := new(Konfig)
-	meta := Metadata{
-		Paths: []string{
-			xdg.ConfigHome + "/kruise",
-			xdg.Home,
-		},
-		Name:      ".kruise",
-		Extension: "yaml",
+	cwd, err := os.Getwd()
+	Fatal(err)
+	cfg.Files = []string{
+		cwd + "/kruise.yaml",
+		xdg.ConfigHome + "/kruise/kruise.yaml",
+		xdg.Home + "/.kruise.yaml",
 	}
-	cfg.Metadata = meta
+	cfg.ApplyUserConfig()
 	return cfg
 }
 
-// Initialize reads in a configuration file that is passed to viper and
+// ApplyUserConfig reads in a configuration file that is passed to viper and
 // unmarshalled
-func (kfg *Konfig) Initialize() {
-	if kfg.Metadata.Override != "" {
-		// Use config file from override
-		viper.SetConfigFile(kfg.Metadata.Override)
+func (k *Konfig) ApplyUserConfig() {
+	Logger.Debug("Setting user config")
+	k.setUserConfig()
+	Logger.Debug("Unmarshalling user config")
+	k.unmarshalExactConfig()
+	Logger.Trace("Config unmarshalled")
+}
+
+func (k Konfig) setUserConfig() {
+	if k.Override != "" {
+		Logger.Debugf("Overriding default user config: %s", k.Override)
+		viper.SetConfigFile(k.Override)
+		Logger.Debugf("Default user config overridden: %s", k.Override)
 	} else {
-		viper.SetConfigName(kfg.Metadata.Name)
-		viper.SetConfigType(kfg.Metadata.Extension)
-		for _, path := range kfg.Metadata.Paths {
-			viper.AddConfigPath(path)
+		for _, file := range k.Files {
+			Logger.Debugf("Searching for config in %s", file)
+			if exists(file) {
+				Logger.Debugf("Config found in %s", file)
+				viper.SetConfigFile(file)
+				break
+			}
+			Logger.Debugf("Config not found in %s", file)
 		}
 	}
-	viper.AutomaticEnv()
+	k.readConfig()
+}
+
+func (k Konfig) readConfig() {
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		Logger.Infof("Using config file: %s\n", viper.ConfigFileUsed())
 	} else {
-		log.Fatalln("Something is wrong with the config path:", err)
-	}
-	err := viper.UnmarshalExact(&kfg.Manifest)
-	if err != nil {
-		log.Fatalf("Unable to decode config into struct, %v", err)
+		if k.Override != "" {
+			Logger.Warnf("No user supplied config found in: %v", k.Override)
+		} else {
+			Logger.Warnf("No user supplied config found in the following paths: %v", k.Files)
+		}
 	}
 }
 
-// func (kfg Konfig) GetDeployConfig() Deployments {
-// 	return Deployments{kfg.Manifest.Deploy}
-// }
+func (k *Konfig) unmarshalExactConfig() {
+	if err := viper.UnmarshalExact(&k.Manifest); err != nil {
+		Fatalf(err, "Unable to decode config into struct")
+	}
+}
 
-// func (kfg Konfig) GetDeleteConfig() Deployments {
-// 	return Deployments{kfg.Manifest.Delete}
-// }
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}

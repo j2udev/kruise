@@ -25,7 +25,7 @@ type (
 
 	ICommandBuilder interface {
 		WithArgs(a []string) ICommandBuilder
-		WithDryRun() ICommandBuilder
+		WithDryRun(dr bool) ICommandBuilder
 		Build() ICommand
 	}
 )
@@ -33,7 +33,7 @@ type (
 // NewCmd creates a new CommandBuilder for executing CLI commands
 func NewCmd(name string) ICommandBuilder {
 	cmd := Command{Name: name, DryRun: false}
-	return CommandBuilder{cmd}
+	return CommandBuilder{cmd}.WithDryRun(false)
 }
 
 // WithArgs adds arguments to the CLI command
@@ -43,8 +43,8 @@ func (c CommandBuilder) WithArgs(args []string) ICommandBuilder {
 }
 
 // WithDryRun prints the command instead of executing it when Execute() is called
-func (c CommandBuilder) WithDryRun() ICommandBuilder {
-	c.DryRun = true
+func (c CommandBuilder) WithDryRun(dr bool) ICommandBuilder {
+	c.DryRun = dr
 	return c
 }
 

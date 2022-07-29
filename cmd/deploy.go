@@ -36,5 +36,6 @@ func NewDeployFlags() *pflag.FlagSet {
 	fs.BoolP("concurrent", "c", false, "Deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
 	fs.BoolP("parallel", "p", false, "Deploy the arguments in parallel (will be ignored if '--concurrent' is passed)")
 	fs.BoolP("init", "i", false, "Add Helm repositories for the specified options")
+	fs.MarkHidden("parallel")
 	return fs
 }

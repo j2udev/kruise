@@ -1,137 +1,40 @@
 apiVersion: v1alpha1
 kind: Config
 deploy:
-  helm:
-    - option:
-        arguments: "jaeger"
-        description: "Deploys Jaeger to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://jaegertracing.github.io/helm-charts"
-          name: jaegertracing
-          private: false
-        chartName: jaeger
-        releaseName: jaeger
-        chartPath: jaegertracing/jaeger
-        namespace: observability
-        version: 0.39.5
+  mongodb:
+    aliases:
+    - mongo
+    description:
+      deploy: deploy mongo to your k8s cluster
+      delete: delete mongo from your k8s cluster
+    helm:
+      repositories:
+      - url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+        name: bitnami
+        private: false
+      charts:
+      - chartName: mongodb
+        releaseName: mongodb
+        chartPath: bitnami/mongodb
+        namespace: mongodb
         values:
-          - /path/to/values/jaeger/jaeger-values.yaml
+        - /path/to/values.yaml
         setValues:
-          - "image=test:0.1.0"
+        - "image=test:0.1.0"
         installArgs:
         - "--create-namespace"
-    - option:
-        arguments: "kafka"
-        description: "Deploys Kafka to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://charts.bitnami.com/bitnami"
-          name: bitnami
-          private: false
-        releaseName: kafka
-        chartPath: bitnami/kafka
-        namespace: kafka
-        version: 11.8.9
-        values:
-          - /path/to/values/kafka/kafka-values.yaml
-    - option:
-        arguments: "mongodb, mongo"
-        description: "Deploys MongoDB to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://charts.bitnami.com/bitnami"
-          name: bitnami
-          private: false
-        releaseName: mongodb
-        chartPath: bitnami/mongodb
+        uninstallArgs:
+        - "--create-namespace"
+        priority: 1
+    kubectl:
+      secrets:
+      - type: docker-registry
+        name: mongo-image-pull-secret
         namespace: mongodb
-        version: 7.14.8
-        values:
-          - /path/to/values/mongodb/mongodb-values.yaml
-    - option:
-        arguments: "mysql"
-        description: "Deploys MySQL to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://charts.bitnami.com/bitnami"
-          name: bitnami
-          private: false
-        releaseName: mysql
-        chartPath: bitnami/mysql
-        namespace: mysql
-        version: 8.0.0
-        values:
-          - /path/to/values/mysql/mysql-values.yaml
-    - option:
-        arguments: "postgresql, postgres"
-        description: "Deploys PostgreSQL to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://charts.bitnami.com/bitnami"
-          name: bitnami
-          private: false
-        releaseName: postgresql
-        chartPath: bitnami/postgresql
-        namespace: postgresql
-        version: 9.8.11
-        values:
-          - /path/to/values/postgresql/postgresql-values.yaml
-    - option:
-        arguments: "prometheus-operator, prom-op"
-        description: "Deploys Prometheus Operator to your Kubernetes cluster"
-      chart:
-        repository:
-          url: "https://prometheus-community.github.io/helm-charts"
-          name: prometheus-community
-          private: false
-        releaseName: prometheus-operator
-        chartPath: prometheus-community/kube-prometheus-stack
-        namespace: monitoring
-        version: 16.12.2
-        values:
-          - /path/to/values/prometheus-operator/prometheus-operator-values.yaml
-delete:
-  helm:
-    - option:
-        arguments: "jaeger"
-        description: "Deletes Jaeger from your Kubernetes cluster"
-      chart:
-        releaseName: jaeger
-        chartPath: jaegertracing/jaeger
-        namespace: observability
-    - option:
-        arguments: "kafka"
-        description: "Deletes Kafka from your Kubernetes cluster"
-      chart:
-        releaseName: kafka
-        chartPath: bitnami/kafka
-        namespace: kafka
-    - option:
-        arguments: "mongodb, mongo"
-        description: "Deletes MongoDB from your Kubernetes cluster"
-      chart:
-        releaseName: mongodb
-        chartPath: bitnami/mongodb
-        namespace: mongodb
-    - option:
-        arguments: "mysql"
-        description: "Deletes MySQL from your Kubernetes cluster"
-      chart:
-        releaseName: mysql
-        chartPath: bitnami/mysql
-        namespace: mysql
-    - option:
-        arguments: "postgresql, postgres"
-        description: "Deletes PostgreSQL from your Kubernetes cluster"
-      chart:
-        releaseName: postgresql
-        chartPath: bitnami/postgresql
-        namespace: postgresql
-    - option:
-        arguments: "prometheus-operator, prom-op"
-        description: "Deletes Prometheus Operator from your Kubernetes cluster"
-      chart:
-        releaseName: prometheus-operator
-        chartPath: prometheus-community/kube-prometheus-stack
-        namespace: monitoring
+        registry: docker.io
+      manifests:
+      - namespace: mongodb
+        priority: 1
+        paths:
+        - /path/to/resource.yaml
+        - /path/to/resources

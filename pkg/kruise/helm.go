@@ -6,9 +6,20 @@ import (
 	"strings"
 
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/spf13/pflag"
 )
 
-type HelmDeployment latest.HelmDeployment
+type (
+	HelmDeployment   latest.HelmDeployment
+	HelmRepository   latest.HelmRepository
+	HelmChart        latest.HelmChart
+	HelmDeployments  []HelmDeployment
+	HelmRepositories []HelmRepository
+	HelmCharts       []HelmChart
+	HelmInstallers   interface {
+		HelmRepository | HelmChart
+	}
+)
 
 // NewHelmDeployment is a helper function for dealing with the latest.HelmDeployment
 // to HelmDeployment type definition
@@ -18,7 +29,7 @@ func NewHelmDeployment(dep latest.HelmDeployment) HelmDeployment {
 
 // NewHelmDeployments is a helper function for dealing with the latest.HelmDeployment
 // to HelmDeployment type definition
-func NewHelmDeployments(deps []latest.HelmDeployment) []HelmDeployment {
+func NewHelmDeployments(deps []latest.HelmDeployment) HelmDeployments {
 	var d []HelmDeployment
 	for _, dep := range deps {
 		d = append(d, NewHelmDeployment(dep))
@@ -26,83 +37,137 @@ func NewHelmDeployments(deps []latest.HelmDeployment) []HelmDeployment {
 	return d
 }
 
-// Init is used to initialize Helm repositories
-func (h HelmDeployment) Init(shallowDryRun bool) error {
-	if !shallowDryRun {
-		checkHelm()
-	}
-	b := NewCmd("helm").WithArgs(constructHelmInitArgs(h, shallowDryRun))
-	if shallowDryRun {
-		b = b.WithDryRun()
-	}
-	cmd := b.Build()
-	return cmd.Execute()
+func NewHelmRepository(rep latest.HelmRepository) HelmRepository {
+	return HelmRepository(rep)
 }
 
-// Install is used to install/upgrade a Helm deployment
-func (h HelmDeployment) Install(shallowDryRun bool) error {
-	if !shallowDryRun {
-		checkHelm()
+func NewHelmRepositories(reps []latest.HelmRepository) HelmRepositories {
+	var r HelmRepositories
+	for _, rep := range reps {
+		r = append(r, NewHelmRepository(rep))
 	}
-	b := NewCmd("helm").WithArgs(constructHelmInstallArgs(h))
-	if shallowDryRun {
-		b = b.WithDryRun()
-	}
-	cmd := b.Build()
-	return cmd.Execute()
+	return r
 }
 
-// Uninstall is used to uninstall a Helm deployment
-func (h HelmDeployment) Uninstall(shallowDryRun bool) error {
-	if !shallowDryRun {
-		checkHelm()
-	}
-	b := NewCmd("helm").WithArgs(constructHelmUninstallArgs(h))
-	if shallowDryRun {
-		b = b.WithDryRun()
-	}
-	cmd := b.Build()
-	return cmd.Execute()
+func NewHelmChart(c latest.HelmChart) HelmChart {
+	return HelmChart(c)
 }
 
-func HelmRepoUpdate(shallowDryRun bool) error {
-	if !shallowDryRun {
-		checkHelm()
+func NewHelmCharts(charts []latest.HelmChart) HelmCharts {
+	var c HelmCharts
+	for _, chart := range charts {
+		c = append(c, NewHelmChart(chart))
 	}
-	b := NewCmd("helm").WithArgs([]string{"repo", "update"})
-	if shallowDryRun {
-		b = b.WithDryRun()
-	}
-	cmd := b.Build()
-	return cmd.Execute()
+	return c
 }
 
-func checkHelm() {
-	err := exec.Command("helm").Run()
-	Fatalf(err, "Helm does not appear to be installed")
+func (d HelmDeployment) GetInstallers() []IInstaller {
+	l := len(d.Repositories) + len(d.Charts)
+	installers := make([]IInstaller, l)
+	for i, r := range d.Repositories {
+		installers[i] = IInstaller(NewHelmRepository(r))
+	}
+	for i, c := range d.Charts {
+		installers[i] = IInstaller(NewHelmChart(c))
+	}
+	return installers
 }
 
-func constructHelmInitArgs(h HelmDeployment, dryRun bool) []string {
-	r := h.HelmChart.Repository
-	if r.RepoName == "" {
+func (c HelmChart) Install(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	helmExecute(d, c.installArgs(fs))
+}
+
+func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	helmExecute(d, c.uninstallArgs(fs))
+}
+
+func (r HelmRepository) Install(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	helmExecute(d, r.installArgs(fs))
+}
+
+func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
+	Logger.Warn("TODO: HelmRepository.Uninstall()")
+}
+
+func (c HelmChart) installArgs(fs *pflag.FlagSet) []string {
+	if c.ReleaseName == "" {
+		log.Fatal("You must specify a Helm release name")
+	}
+	if c.ChartPath == "" {
+		log.Fatal("You must specify a Helm chart")
+	}
+	args := []string{
+		"upgrade",
+		"--install",
+		c.ReleaseName,
+		c.ChartPath,
+		"--namespace",
+		c.Namespace,
+	}
+	if c.Version != "" {
+		args = append(args, "--version", c.Version)
+	}
+	if len(c.Values) > 0 {
+		for _, val := range c.Values {
+			args = append(args, "-f", val)
+		}
+	}
+	if len(c.SetValues) > 0 {
+		for _, val := range c.SetValues {
+			args = append(args, "--set", val)
+		}
+	}
+	args = append(args, c.InstallArgs...)
+	return args
+}
+
+func (c HelmChart) uninstallArgs(fs *pflag.FlagSet) []string {
+	if c.ReleaseName == "" {
+		log.Fatal("You must specify a Helm release name")
+	}
+	if c.Namespace == "" {
+		c.Namespace = "default"
+	}
+	args := []string{
+		"uninstall",
+		c.ReleaseName,
+		"--namespace",
+		c.Namespace,
+	}
+	if len(c.UninstallArgs) > 0 {
+		args = append(args, c.UninstallArgs...)
+	}
+	return args
+}
+
+func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
+	sdr, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	if r.Name == "" {
 		log.Fatal("You must specify a Helm repository name")
 	}
-	if r.RepoUrl == "" {
+	if r.Url == "" {
 		log.Fatal("You must specify a Helm repository url")
 	}
 	args := []string{
 		"repo",
 		"add",
-		r.RepoName,
-		r.RepoUrl,
+		r.Name,
+		r.Url,
 		"--force-update",
 	}
-	if h.Repository.PrivateRepo {
-		usernamePrompt := "Please enter username for " + h.Repository.RepoName + " repository"
-		passwordPrompt := "Please enter password for " + h.Repository.RepoName + " repository"
+	if r.Private {
+		usernamePrompt := "Please enter username for " + r.Name + " repository"
+		passwordPrompt := "Please enter password for " + r.Name + " repository"
 		u, p, err := CredentialPrompt(usernamePrompt, passwordPrompt)
 		Fatal(err)
-		if dryRun {
+		if sdr {
 			u = strings.Repeat("*", len(u))
 			p = strings.Repeat("*", len(p))
 		}
@@ -114,53 +179,20 @@ func constructHelmInitArgs(h HelmDeployment, dryRun bool) []string {
 	return args
 }
 
-func constructHelmInstallArgs(h HelmDeployment) []string {
-	if h.ReleaseName == "" {
-		log.Fatal("You must specify a Helm release name")
-	}
-	if h.ChartPath == "" {
-		log.Fatal("You must specify a Helm chart")
-	}
-	args := []string{
-		"upgrade",
-		"--install",
-		h.ReleaseName,
-		h.ChartPath,
-		"--namespace",
-		h.Namespace,
-	}
-	if h.Version != "" {
-		args = append(args, "--version", h.Version)
-	}
-	if len(h.Values) > 0 {
-		for _, val := range h.Values {
-			args = append(args, "-f", val)
-		}
-	}
-	if len(h.SetValues) > 0 {
-		for _, val := range h.SetValues {
-			args = append(args, "--set", val)
-		}
-	}
-	args = append(args, h.InstallArgs...)
-	return args
+func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
+	Logger.Warn("TODO: helmRepoUninstallArgs")
+	return []string{"TODO: HelmRepository.Uninstall()"}
 }
 
-func constructHelmUninstallArgs(h HelmDeployment) []string {
-	if h.ReleaseName == "" {
-		log.Fatal("You must specify a Helm release name")
-	}
-	if h.Namespace == "" {
-		h.Namespace = "default"
-	}
-	args := []string{
-		"uninstall",
-		h.ReleaseName,
-		"--namespace",
-		h.Namespace,
-	}
-	if len(h.UninstallArgs) > 0 {
-		args = append(args, h.UninstallArgs...)
-	}
-	return args
+func helmExecute(dry bool, args []string) {
+	Fatal(NewCmd("helm").
+		WithArgs(args).
+		WithDryRun(dry).
+		Build().
+		Execute())
+}
+
+func checkHelm() {
+	err := exec.Command("helm").Run()
+	Fatalf(err, "Helm does not appear to be installed")
 }

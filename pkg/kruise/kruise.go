@@ -21,7 +21,6 @@ func Initialize() {
 // InitializeConfig is used to initialize Kruise configuration
 func InitializeConfig() {
 	Kfg = NewKonfig()
-	Kfg.Initialize()
 	Logger.Trace("Config initialized")
 }
 

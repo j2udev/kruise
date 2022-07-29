@@ -19,7 +19,8 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/main.go",
-      "args": ["deploy", "kafka", "prom-op", "-dp", "--verbosity=trace"],
+      "args": ["migrate", "deploy", "kafka", "prom-op", "-dp", "--verbosity=trace"],
+      // "env": { "ENV_SERVERADDRESS": "0.0.0.0:7171" },
       "console": "integratedTerminal"
     },
     {
