@@ -1,4 +1,4 @@
-package latest
+package v1alpha1
 
 import "github.com/j2udevelopment/kruise/pkg/kruise/schema/version"
 

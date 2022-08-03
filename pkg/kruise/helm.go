@@ -16,9 +16,6 @@ type (
 	HelmDeployments  []HelmDeployment
 	HelmRepositories []HelmRepository
 	HelmCharts       []HelmChart
-	HelmInstallers   interface {
-		HelmRepository | HelmChart
-	}
 )
 
 // NewHelmDeployment is a helper function for dealing with the latest.HelmDeployment
@@ -37,10 +34,14 @@ func NewHelmDeployments(deps []latest.HelmDeployment) HelmDeployments {
 	return d
 }
 
+// NewHelmRepository is a helper function for dealing with the latest.HelmRepository
+// to HelmRepository type definition
 func NewHelmRepository(rep latest.HelmRepository) HelmRepository {
 	return HelmRepository(rep)
 }
 
+// NewHelmRepositories is a helper function for dealing with the latest.HelmRepository
+// to HelmRepository type definition
 func NewHelmRepositories(reps []latest.HelmRepository) HelmRepositories {
 	var r HelmRepositories
 	for _, rep := range reps {
@@ -49,10 +50,14 @@ func NewHelmRepositories(reps []latest.HelmRepository) HelmRepositories {
 	return r
 }
 
+// NewHelmChart is a helper function for dealing with the latest.HelmChart
+// to HelmChart type definition
 func NewHelmChart(c latest.HelmChart) HelmChart {
 	return HelmChart(c)
 }
 
+// NewHelmCharts is a helper function for dealing with the latest.HelmChart
+// to HelmChart type definition
 func NewHelmCharts(charts []latest.HelmChart) HelmCharts {
 	var c HelmCharts
 	for _, chart := range charts {
@@ -61,38 +66,56 @@ func NewHelmCharts(charts []latest.HelmChart) HelmCharts {
 	return c
 }
 
-func (d HelmDeployment) GetInstallers() []IInstaller {
-	l := len(d.Repositories) + len(d.Charts)
-	installers := make([]IInstaller, l)
-	for i, r := range d.Repositories {
-		installers[i] = IInstaller(NewHelmRepository(r))
-	}
-	for i, c := range d.Charts {
-		installers[i] = IInstaller(NewHelmChart(c))
-	}
-	return installers
+// GetHelmRepositories is a helper function for grabbing the HelmRepositories
+// from a HelmDeployment
+func (d HelmDeployment) GetHelmRepositories() HelmRepositories {
+	return NewHelmRepositories(d.Repositories)
+}
+
+// GetHelmCharts is a helper function for grabbing the HelmCharts
+// from a HelmDeployment
+func (d HelmDeployment) GetHelmCharts() HelmCharts {
+	return NewHelmCharts(d.Charts)
 }
 
 func (c HelmChart) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
+	if !d {
+		checkHelm()
+	}
 	helmExecute(d, c.installArgs(fs))
 }
 
 func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
+	if !d {
+		checkHelm()
+	}
 	helmExecute(d, c.uninstallArgs(fs))
+}
+
+func (c HelmChart) GetPriority() int {
+	return c.Priority
 }
 
 func (r HelmRepository) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
+	if !d {
+		checkHelm()
+	}
 	helmExecute(d, r.installArgs(fs))
 }
 
 func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
-	Logger.Warn("TODO: HelmRepository.Uninstall()")
+	d, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	if !d {
+		checkHelm()
+	}
+	Warn(helmExecute(d, r.uninstallArgs(fs)))
 }
 
 func (c HelmChart) installArgs(fs *pflag.FlagSet) []string {
@@ -184,12 +207,12 @@ func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
 	return []string{"TODO: HelmRepository.Uninstall()"}
 }
 
-func helmExecute(dry bool, args []string) {
-	Fatal(NewCmd("helm").
+func helmExecute(dry bool, args []string) error {
+	return NewCmd("helm").
 		WithArgs(args).
 		WithDryRun(dry).
 		Build().
-		Execute())
+		Execute()
 }
 
 func checkHelm() {

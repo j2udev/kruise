@@ -1,40 +1,64 @@
 apiVersion: v1alpha1
 kind: Config
 deploy:
-  mongodb:
-    aliases:
-    - mongo
-    description:
-      deploy: deploy mongo to your k8s cluster
-      delete: delete mongo from your k8s cluster
-    helm:
-      repositories:
-      - url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-        name: bitnami
-        private: false
-      charts:
-      - chartName: mongodb
-        releaseName: mongodb
-        chartPath: bitnami/mongodb
-        namespace: mongodb
-        values:
-        - /path/to/values.yaml
-        setValues:
-        - "image=test:0.1.0"
-        installArgs:
-        - "--create-namespace"
-        uninstallArgs:
-        - "--create-namespace"
-        priority: 1
-    kubectl:
-      secrets:
-      - type: docker-registry
-        name: mongo-image-pull-secret
-        namespace: mongodb
-        registry: docker.io
-      manifests:
-      - namespace: mongodb
-        priority: 1
-        paths:
-        - /path/to/resource.yaml
-        - /path/to/resources
+  deployments:
+    prometheus-operator:
+      aliases:
+      - prom-op
+      description:
+        deploy: deploy Prometheus Operator to your k8s cluster
+        delete: delete Prometheus Operator from your k8s cluster
+      helm:
+        repositories:
+        - url: https://prometheus-community.github.io/helm-charts
+          name: prometheus-community
+        charts:
+        - chartName: prometheus-operator
+          releaseName: prometheus-operator
+          chartPath: prometheus-community/kube-prometheus-stack
+          namespace: monitoring
+          values:
+          - /path/to/values.yaml
+          setValues:
+          - "image=custom-image:0.1.0"
+          installArgs:
+          - "--create-namespace"
+          - "--wait"
+          priority: 1
+    mongodb:
+      aliases:
+      - mongo
+      description:
+        deploy: deploy mongo to your k8s cluster
+        delete: delete mongo from your k8s cluster
+      helm:
+        repositories:
+        - url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+          name: bitnami
+          private: false
+        charts:
+        - chartName: mongodb
+          releaseName: mongodb
+          chartPath: bitnami/mongodb
+          namespace: mongodb
+          values:
+          - /path/to/values.yaml
+          setValues:
+          - "image=test:0.1.0"
+          installArgs:
+          - "--create-namespace"
+          uninstallArgs:
+          - "--create-namespace"
+          priority: 2
+      kubectl:
+        secrets:
+        - type: docker-registry
+          name: mongo-image-pull-secret
+          namespace: mongodb
+          registry: docker.io
+        manifests:
+        - namespace: mongodb
+          priority: 3
+          paths:
+          - /path/to/resource.yaml
+          - /path/to/resources

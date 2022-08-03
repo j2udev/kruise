@@ -38,7 +38,7 @@ type (
 
 	KubectlDeployment struct {
 		Secrets   []KubectlSecret   `mapstructure:"secrets"`
-		Manifests []KubectlManifest `mapstructure:"secrets"`
+		Manifests []KubectlManifest `mapstructure:"manifests"`
 	}
 
 	HelmRepository struct {

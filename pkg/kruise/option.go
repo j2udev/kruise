@@ -18,24 +18,10 @@ func NewOption(args []string, desc string) Option {
 	}
 }
 
-// type Option latest.Option
-
-// func NewOption(o latest.Option) Option {
-// 	return Option(o)
-// }
-
-// func NewOptions(opts []latest.Option) []Option {
-// 	var o []Option
-// 	for _, opt := range opts {
-// 		o = append(o, NewOption(opt))
-// 	}
-// 	return o
-// }
-
-// func GetValidArgs(opts []Option) []string {
-// 	var valid []string
-// 	for _, opt := range opts {
-// 		valid = append(valid, strings.Split(opt.Arguments, ", ")...)
-// 	}
-// 	return valid
-// }
+func (o Options) GetValidArgs() []string {
+	var valid []string
+	for _, opt := range o {
+		valid = append(valid, strings.Split(opt.Arguments, ", ")...)
+	}
+	return valid
+}
