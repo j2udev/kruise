@@ -84,7 +84,14 @@ func (c HelmChart) Install(fs *pflag.FlagSet) {
 	if !d {
 		checkHelm()
 	}
-	helmExecute(d, c.installArgs(fs))
+	err = helmExecute(d, c.installArgs(fs))
+	if err != nil {
+		if strings.Contains(err.Error(), "deprecated") {
+			Warn(err)
+		} else {
+			Error(err)
+		}
+	}
 }
 
 func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
@@ -116,6 +123,11 @@ func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
 		checkHelm()
 	}
 	Warn(helmExecute(d, r.uninstallArgs(fs)))
+}
+
+func (r HelmRepository) GetPriority() int {
+	// For now, HelmRepositories are just installed first
+	return 0
 }
 
 func (c HelmChart) installArgs(fs *pflag.FlagSet) []string {
@@ -186,17 +198,20 @@ func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
 		"--force-update",
 	}
 	if r.Private {
-		usernamePrompt := "Please enter username for " + r.Name + " repository"
-		passwordPrompt := "Please enter password for " + r.Name + " repository"
-		u, p, err := CredentialPrompt(usernamePrompt, passwordPrompt)
-		Fatal(err)
-		if sdr {
-			u = strings.Repeat("*", len(u))
-			p = strings.Repeat("*", len(p))
+		u := "***"
+		p := []byte("***")
+		if !sdr {
+			var up, pp string
+			up = "Please enter your username for the " + r.Name + " Helm repository"
+			pp = "Please enter your password for the " + r.Name + " Helm repository"
+			un, pw, err := credentialPrompt(up, pp)
+			Fatal(err)
+			u = un
+			p = []byte(pw)
 		}
 		args = append(args,
 			"--username", u,
-			"--password", p,
+			"--password", string(p),
 			"--pass-credentials")
 	}
 	return args
@@ -205,6 +220,12 @@ func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
 func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
 	Logger.Warn("TODO: helmRepoUninstallArgs")
 	return []string{"TODO: HelmRepository.Uninstall()"}
+}
+
+func helmRepoUpdate(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("shallow-dry-run")
+	Fatal(err)
+	helmExecute(d, []string{"repo", "update"})
 }
 
 func helmExecute(dry bool, args []string) error {

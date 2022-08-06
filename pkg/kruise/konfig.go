@@ -1,6 +1,7 @@
 package kruise
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/adrg/xdg"
@@ -60,7 +61,7 @@ func (k Konfig) setUserConfig() {
 
 func (k Konfig) readConfig() {
 	if err := viper.ReadInConfig(); err == nil {
-		Logger.Infof("Using config file: %s\n", viper.ConfigFileUsed())
+		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
 	} else {
 		if k.Override != "" {
 			Logger.Warnf("No user supplied config found in: %v", k.Override)

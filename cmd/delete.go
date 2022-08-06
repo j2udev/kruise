@@ -36,7 +36,7 @@ func NewDeleteOptions() []kruise.Option {
 // See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
 func NewDeleteFlags() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("delete", pflag.ContinueOnError)
-	fs.BoolP("shallow-dry-run", "d", false, "Output the command being performed under the hood")
-	fs.BoolP("concurrent", "c", false, "Delete the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
+	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
+	fs.BoolP("concurrent", "c", false, "delete the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
 	return fs
 }

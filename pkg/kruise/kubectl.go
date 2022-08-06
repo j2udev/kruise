@@ -1,7 +1,6 @@
 package kruise
 
 import (
-	"fmt"
 	"os/exec"
 
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
@@ -119,6 +118,11 @@ func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
 	Debug(kubectlDeleteSecret(d, s.uninstallArgs(fs)))
 }
 
+func (s KubectlSecret) GetPriority() int {
+	// For now, KubectlSecrets are just installed first
+	return 0
+}
+
 func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 	args := []string{"apply", "--namespace", m.Namespace}
 	for _, p := range m.Paths {
@@ -149,14 +153,16 @@ func (s KubectlSecret) installArgs(fs *pflag.FlagSet) []string {
 		args = append(args, "docker-registry", s.Name, "--docker-server", s.Registry)
 		if !sdr {
 			var up, pp string
-			up = fmt.Sprintf("Please enter your username for the %s container registry", s.Name)
-			pp = fmt.Sprintf("Please enter your password for the %s container registry", s.Name)
-			uname, pwd, err := CredentialPrompt(up, pp)
+			up = "Please enter your username for the " + s.Registry + " container registry"
+			pp = "Please enter your password for the " + s.Registry + " container registry"
+			un, pw, err := credentialPrompt(up, pp)
 			Fatal(err)
-			u = uname
-			p = []byte(pwd)
+			u = un
+			p = []byte(pw)
 		}
-		args = append(args, "--docker-username", u, "--docker-password", string(p))
+		args = append(args,
+			"--docker-username", u,
+			"--docker-password", string(p))
 	default:
 		Logger.Fatalf("kubectl secret type: %v not supported", s.Type)
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func CredentialPrompt(usernamePrompt string, passwordPrompt string) (username string, password string, err error) {
+func credentialPrompt(usernamePrompt string, passwordPrompt string) (username string, password string, err error) {
 	validate := func(input string) error {
 		return nil
 	}
@@ -20,7 +20,7 @@ func CredentialPrompt(usernamePrompt string, passwordPrompt string) (username st
 		Mask:     '*',
 	}
 	c := promptui.Prompt{
-		Label:    "Reenter password",
+		Label:    "Please confirm your password",
 		Validate: validate,
 		Mask:     '*',
 	}

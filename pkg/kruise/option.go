@@ -11,14 +11,14 @@ type (
 	Options []Option
 )
 
-func NewOption(args []string, desc string) Option {
+func newOption(args []string, desc string) Option {
 	return Option{
 		Arguments:   strings.Join(args, ", "),
 		Description: desc,
 	}
 }
 
-func (o Options) GetValidArgs() []string {
+func (o Options) getValidArgs() []string {
 	var valid []string
 	for _, opt := range o {
 		valid = append(valid, strings.Split(opt.Arguments, ", ")...)

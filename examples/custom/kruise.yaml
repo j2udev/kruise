@@ -1,0 +1,65 @@
+apiVersion: v1alpha1
+kind: Config
+deploy:
+  deployments:
+    # This is just an example to demonstrate custom deployments
+    custom-deployment1:
+      aliases:
+      - cd1
+      description:
+        deploy: custom cd1 deployment description
+        delete: custom cd1 deployment description
+      kubectl:
+        secrets:
+        - type: docker-registry
+          name: custom-image-pull-secret
+          namespace: custom
+          registry: private-container-registry.com
+        manifests:
+        - namespace: custom
+          priority: 1 # Each manifest or Helm chart can specify a different priority which affect deployment order
+          paths:
+          - path/to/custom/manifest.yaml
+          - path/to/custom/manifests
+          - https://github.com/foo/bar/baz.yaml
+      helm:
+        repositories:
+        - name: custom-helm-repo
+          url: https://custom.helm.repo
+          private: true # Setting private to true will prompt the user for credentials when the --init flag is used
+        charts:
+        - priority: 2
+          chartName: custom-chart
+          releaseName: custom-release
+          namespace: custom
+          chartPath: custom-helm-repo/custom-chart
+          version: 0.1.0
+          values:
+          - path/to/custom/values1.yaml
+          - path/to/custom/values2.yaml
+          setValues:
+          - custom.nested.parameter=foo # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
+          installArgs:
+          - --create-namespace
+          - --wait
+          uninstallArgs:
+          - --dry-run
+    cert-manager:
+      aliases:
+      - cm
+      description:
+        deploy: deploy cert-manager to your k8s cluster
+        delete: delete cert-manager from your k8s cluster
+      kubectl:
+        manifests:
+        - paths:
+          - https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.crds.yaml
+      helm:
+        repositories:
+        - name: jetstack
+          url: https://charts.jetstack.io
+        charts:
+        - chartPath: jetstack/cert-manager
+          releaseName: cert-manager
+          version: 1.9.1
+          priority: 1

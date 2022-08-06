@@ -16,6 +16,34 @@ type (
 	Installers []Installer
 )
 
+// Init invokes the Install function for all Installers that should only be
+// installed during initialization (i.e. HelmRepositories and KubectlSecrets)
+func Init(fs *pflag.FlagSet, installers ...Installer) {
+	hasHelmDeployment := false
+	u := make(map[string]Installer)
+	for _, i := range installers {
+		switch d := i.(type) {
+		case KubectlSecret:
+			// TODO: deduplicate the creation of secrets
+			i.Install(fs)
+		case HelmRepository:
+			hasHelmDeployment = true
+			repo := d.Url
+			if _, ok := u[repo]; !ok {
+				u[repo] = i
+				i.Install(fs)
+			}
+		default:
+			Logger.Errorf("Invalid installer for the Init() function: %v", d)
+		}
+	}
+	// if a Helm installer was in the list of the installers to initialize,
+	// perform a helm repo update at the end
+	if hasHelmDeployment {
+		helmRepoUpdate(fs)
+	}
+}
+
 // Install invokes the Install function for all Installers passed
 func Install(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
