@@ -16,87 +16,33 @@ type (
 	KubectlManifests   []KubectlManifest
 )
 
-// NewKubectlDeployment is a helper function for dealing with the latest.KubectlDeployment
-// to KubectlDeployment type definition
-func NewKubectlDeployment(dep latest.KubectlDeployment) KubectlDeployment {
-	return KubectlDeployment(dep)
-}
-
-// NewKubectlDeployments is a helper function for dealing with the latest.KubectlDeployment
-// to KubectlDeployment type definition
-func NewKubectlDeployments(deps []latest.KubectlDeployment) KubectlDeployments {
-	var d []KubectlDeployment
-	for _, dep := range deps {
-		d = append(d, NewKubectlDeployment(dep))
-	}
-	return d
-}
-
-// NewKubectlSecret is a helper function for dealing with the latest.KubectlSecret
-// to KubectlSecret type definition
-func NewKubectlSecret(sec latest.KubectlSecret) KubectlSecret {
-	return KubectlSecret(sec)
-}
-
-// NewKubectlSecrets is a helper function for dealing with the latest.KubectlSecret
-// to KubectlSecret type definition
-func NewKubectlSecrets(secs []latest.KubectlSecret) KubectlSecrets {
-	var s KubectlSecrets
-	for _, sec := range secs {
-		s = append(s, NewKubectlSecret(sec))
-	}
-	return s
-}
-
-// NewKubectlManifest is a helper function for dealing with the latest.KubectlManifest
-// to KubectlManifest type definition
-func NewKubectlManifest(man latest.KubectlManifest) KubectlManifest {
-	return KubectlManifest(man)
-}
-
-// NewKubectlManifests is a helper function for dealing with the latest.KubectlManifest
-// to KubectlManifest type definition
-func NewKubectlManifests(mans []latest.KubectlManifest) KubectlManifests {
-	var m KubectlManifests
-	for _, man := range mans {
-		m = append(m, NewKubectlManifest(man))
-	}
-	return m
-}
-
-func (d KubectlDeployment) GetKubectlSecrets() KubectlSecrets {
-	return NewKubectlSecrets(d.Secrets)
-}
-
-func (d KubectlDeployment) GetKubectlManifests() KubectlManifests {
-	return NewKubectlManifests(d.Manifests)
-}
-
+// Install is used to execute a Kubectl apply command
 func (m KubectlManifest) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
-		// printStatus("info", "Kubectl applying "+strings.Join(m.Paths, ", ")+"...")
 	}
 	Debug(kubectlCreateNamespace(d, m.Namespace))
 	Error(kubectlExecute(d, m.installArgs(fs)))
 }
 
+// Uninstall is used to execute a Kubectl delete command
 func (m KubectlManifest) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
-		// printStatus("info", "Kubectl deleting "+strings.Join(m.Paths, ", ")+"...")
 	}
 	Warn(kubectlExecute(d, m.uninstallArgs(fs)))
 }
 
+// GetPriority is used to get the priority of the installer
 func (m KubectlManifest) GetPriority() int {
 	return m.Priority
 }
 
+// Install is used to execute a Kubectl create secret command
 func (s KubectlSecret) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
@@ -109,6 +55,7 @@ func (s KubectlSecret) Install(fs *pflag.FlagSet) {
 	Error(kubectlExecute(d, s.installArgs(fs)))
 }
 
+// Install is used to execute a Kubectl delete secret command
 func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
@@ -118,11 +65,63 @@ func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
 	Debug(kubectlDeleteSecret(d, s.uninstallArgs(fs)))
 }
 
+// GetPriority is used to get the priority of the installer
 func (s KubectlSecret) GetPriority() int {
 	// For now, KubectlSecrets are just installed first
 	return 0
 }
 
+// newKubectlDeployment is a helper function for dealing with the latest.KubectlDeployment
+// to KubectlDeployment type definition
+func newKubectlDeployment(dep latest.KubectlDeployment) KubectlDeployment {
+	return KubectlDeployment(dep)
+}
+
+// newKubectlSecret is a helper function for dealing with the latest.KubectlSecret
+// to KubectlSecret type definition
+func newKubectlSecret(sec latest.KubectlSecret) KubectlSecret {
+	return KubectlSecret(sec)
+}
+
+// newKubectlSecrets is a helper function for dealing with the latest.KubectlSecret
+// to KubectlSecret type definition
+func newKubectlSecrets(secs []latest.KubectlSecret) KubectlSecrets {
+	var s KubectlSecrets
+	for _, sec := range secs {
+		s = append(s, newKubectlSecret(sec))
+	}
+	return s
+}
+
+// newKubectlManifest is a helper function for dealing with the latest.KubectlManifest
+// to KubectlManifest type definition
+func newKubectlManifest(man latest.KubectlManifest) KubectlManifest {
+	return KubectlManifest(man)
+}
+
+// newKubectlManifests is a helper function for dealing with the latest.KubectlManifest
+// to KubectlManifest type definition
+func newKubectlManifests(mans []latest.KubectlManifest) KubectlManifests {
+	var m KubectlManifests
+	for _, man := range mans {
+		m = append(m, newKubectlManifest(man))
+	}
+	return m
+}
+
+// getKubectlSecrets is a helper function for grabbing the KubectlSecrets
+// from a KubectlDeployment
+func (d KubectlDeployment) getKubectlSecrets() KubectlSecrets {
+	return newKubectlSecrets(d.Secrets)
+}
+
+// getKubectlManifests is a helper function for grabbing the KubectlManifests
+// from a KubectlDeployment
+func (d KubectlDeployment) getKubectlManifests() KubectlManifests {
+	return newKubectlManifests(d.Manifests)
+}
+
+// installArgs is used to build Kubectl apply CLI args given a FlagSet
 func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 	args := []string{"apply", "--namespace", m.Namespace}
 	for _, p := range m.Paths {
@@ -131,6 +130,7 @@ func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 	return args
 }
 
+// uninstallArgs is used to build Kubectl delete CLI args given a FlagSet
 func (m KubectlManifest) uninstallArgs(fs *pflag.FlagSet) []string {
 	args := []string{"delete", "--namespace", m.Namespace}
 	for _, p := range m.Paths {
@@ -139,6 +139,7 @@ func (m KubectlManifest) uninstallArgs(fs *pflag.FlagSet) []string {
 	return args
 }
 
+// installArgs is used to build Kubectl create secret CLI args given a FlagSet
 func (s KubectlSecret) installArgs(fs *pflag.FlagSet) []string {
 	sdr, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
@@ -169,6 +170,7 @@ func (s KubectlSecret) installArgs(fs *pflag.FlagSet) []string {
 	return args
 }
 
+// uninstallArgs is used to build Kubectl delete secret CLI args given a FlagSet
 func (s KubectlSecret) uninstallArgs(fs *pflag.FlagSet) []string {
 	args := []string{"delete", "secret", s.Name}
 
@@ -178,6 +180,7 @@ func (s KubectlSecret) uninstallArgs(fs *pflag.FlagSet) []string {
 	return args
 }
 
+// kubectlCreateNamespace is used to execute a kubectl create namespace command
 func kubectlCreateNamespace(dry bool, n string) error {
 	return NewCmd("kubectl").
 		WithArgs([]string{"create", "namespace", n}).
@@ -187,6 +190,7 @@ func kubectlCreateNamespace(dry bool, n string) error {
 		Execute()
 }
 
+// kubectlDeleteSecret is used to execute a kubectl delete secret command
 func kubectlDeleteSecret(dry bool, args []string) error {
 	return NewCmd("kubectl").
 		WithArgs(args).
@@ -196,6 +200,8 @@ func kubectlDeleteSecret(dry bool, args []string) error {
 		Execute()
 }
 
+// kubectlExecute is a helper function for executing a Kubectl command given a set of
+// args; it will print the command instead of executing it if dry is true
 func kubectlExecute(dry bool, args []string) error {
 	return NewCmd("kubectl").
 		WithArgs(args).
@@ -204,6 +210,7 @@ func kubectlExecute(dry bool, args []string) error {
 		Execute()
 }
 
+// checkKubectl is used to determine if the user has the Kubectl CLI installed
 func checkKubectl() {
 	err := exec.Command("kubectl").Run()
 	Fatalf(err, "Kubectl does not appear to be installed")
