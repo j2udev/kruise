@@ -56,7 +56,7 @@ func getValidDeployments(args []string) Installers {
 	deps := Kfg.Manifest.Deploy.Deployments
 	for k, v := range deps {
 		if contains(args, k) || containsAny(args, v.Aliases...) {
-			charts := NewHelmDeployment(v.Helm).GetHelmCharts()
+			charts := newHelmDeployment(v.Helm).getHelmCharts()
 			manifests := NewKubectlDeployment(v.Kubectl).GetKubectlManifests()
 			for _, c := range charts {
 				installers = append(installers, c)
@@ -77,7 +77,7 @@ func getValidInitDeployments(args []string) Installers {
 	for k, v := range deps {
 		if contains(args, k) || containsAny(args, v.Aliases...) {
 			secrets := NewKubectlDeployment(v.Kubectl).GetKubectlSecrets()
-			repositories := NewHelmDeployment(v.Helm).GetHelmRepositories()
+			repositories := newHelmDeployment(v.Helm).getHelmRepositories()
 			for _, s := range secrets {
 				set[s] = x
 			}
