@@ -17,6 +17,16 @@ type Konfig struct {
 	Manifest latest.KruiseConfig
 }
 
+// NewKonfig is used to create a new Kruise config (Konfig) object
+//
+// If the KRUISE_CONFIG environment variable is set, that config file is used,
+// otherwise the following locations are checked in this order:
+//
+// cwd/kruise.yaml
+//
+// xdg.ConfigHome/kruise.yaml
+//
+// xdg.Home/.kruise.yaml
 func NewKonfig() *Konfig {
 	cfg := new(Konfig)
 	cwd, err := os.Getwd()
