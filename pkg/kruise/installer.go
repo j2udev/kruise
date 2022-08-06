@@ -68,12 +68,18 @@ func Uninstall(fs *pflag.FlagSet, installers ...Installer) {
 	}
 }
 
+// installs is used to invoke the install functions of the given Installers
 func installs(fs *pflag.FlagSet, installers ...Installer) {
 	for _, i := range installers {
 		install(i, fs)
 	}
 }
 
+// installc is used to concurrently invoke the install functions of the given
+// Installers
+//
+// Waitgroups are contructed based on Installer Priority where each batch of
+// prioritized deployments are executed concurrently
 func installc(fs *pflag.FlagSet, installers ...Installer) {
 	m := priorityMap(installers...)
 	var keys []int
@@ -94,21 +100,30 @@ func installc(fs *pflag.FlagSet, installers ...Installer) {
 	Logger.Trace("Finished running concurrently")
 }
 
+// installp is used to invoke the install function of a given Installer and
+// call wg.Done()
 func installp(i Installer, fs *pflag.FlagSet, wg *sync.WaitGroup) {
 	defer wg.Done()
 	install(i, fs)
 }
 
+// install is used to invoke the install function of a given Installer
 func install(i Installer, fs *pflag.FlagSet) {
 	i.Install(fs)
 }
 
+// uninstalls is used to invoke the uninstall functions of the given Installers
 func uninstalls(fs *pflag.FlagSet, installers ...Installer) {
 	for _, i := range installers {
 		i.Uninstall(fs)
 	}
 }
 
+// uninstallc is used to concurrently invoke the uninstall functions of the given
+// Installers
+//
+// Waitgroups are contructed based on Installer Priority where each batch of
+// prioritized deployments are executed concurrently
 func uninstallc(fs *pflag.FlagSet, installers ...Installer) {
 	m := priorityMap(installers...)
 	var keys []int
@@ -129,15 +144,19 @@ func uninstallc(fs *pflag.FlagSet, installers ...Installer) {
 	Logger.Trace("Finished running concurrently")
 }
 
+// uninstallp is used to invoke the uninstall function of a given Installer and
+// call wg.Done()
 func uninstallp(i Installer, fs *pflag.FlagSet, wg *sync.WaitGroup) {
 	defer wg.Done()
 	uninstall(i, fs)
 }
 
+// uninstall is used to invoke the uninstall function of a given Installer
 func uninstall(i Installer, fs *pflag.FlagSet) {
 	i.Uninstall(fs)
 }
 
+// priorityMap is used to construct a map of prioritized Installers
 func priorityMap(installers ...Installer) map[int]Installers {
 	m := make(map[int]Installers)
 	for _, installer := range installers {
