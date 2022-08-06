@@ -77,14 +77,3 @@ func (k *Konfig) unmarshalExactConfig() {
 		Fatalf(err, "Unable to decode config into struct")
 	}
 }
-
-func exists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
-}

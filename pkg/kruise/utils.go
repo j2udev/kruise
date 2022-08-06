@@ -1,5 +1,7 @@
 package kruise
 
+import "os"
+
 type void struct{}
 
 func contains[T comparable](list []T, t T) bool {
@@ -18,6 +20,17 @@ func containsAny[T comparable](list []T, any ...T) bool {
 				return true
 			}
 		}
+	}
+	return false
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
 	}
 	return false
 }
