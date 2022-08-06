@@ -26,7 +26,6 @@ func NewKruiseKmd() kruise.Kommand {
 // See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
 func NewKruisePersistentFlags() *pflag.FlagSet {
 	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
-	pfs.StringVarP(&kruise.Kfg.Override, "config", "C", "", "specify a path to a kruise manifest file")
 	pfs.StringP("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)")
 	return pfs
 }

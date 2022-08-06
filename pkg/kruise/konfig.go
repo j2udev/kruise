@@ -26,6 +26,7 @@ func NewKonfig() *Konfig {
 		xdg.ConfigHome + "/kruise/kruise.yaml",
 		xdg.Home + "/.kruise.yaml",
 	}
+	cfg.Override = os.Getenv("KRUISE_CONFIG")
 	cfg.ApplyUserConfig()
 	return cfg
 }
