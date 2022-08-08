@@ -158,8 +158,8 @@ deploy:
 
 and the front and backend devs just need to know that they have an `istio`
 option to deploy to their cluster without needing to know that it requires
-adding a Helm repository, installing three Helm charts, and kubectl applying a
-Gateway custom resource.
+adding a Helm repository, installing three Helm charts in a particular order,
+and kubectl applying a Gateway custom resource.
 
 ```txt
 ╰─❯ kruise deploy -h
