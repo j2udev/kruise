@@ -208,3 +208,224 @@ Using config file: /path/to/kruise.yaml
 /usr/local/bin/kubectl create namespace istio-system
 /usr/local/bin/kubectl apply --namespace istio-system -f manifests/istio-gateway.yaml
 ```
+
+## Deployment Initialization
+
+Preparing a new deployment can often require a few initialization steps. Whether
+that's creating a secret, adding a Helm repository, etc. Often these steps don't
+need to be executed in subsequent deployments and can be opted into with the
+`--init` flag. Applying this flag will determine if any of the passed arguments
+need to have k8s secrets created or Helm repositories added. Kruise will prompt
+you for credentials if needed (if k8s secret(s) or `private` Helm repositories
+are associated with deployment used).
+
+The following manifest will result in the user being prompted for credentials to
+authenticate against the specified container registry. It will also prompt the
+user to enter credentials for the private Helm repository.
+
+```yaml
+apiVersion: v1alpha1
+kind: Config
+deploy:
+    deployments:
+        custom-deployment1:
+            aliases:
+                - cd1
+            description:
+                deploy: custom cd1 deployment description
+                delete: custom cd1 deployment description
+            kubectl:
+                secrets:
+                    - type: docker-registry
+                      name: custom-image-pull-secret
+                      namespace: custom
+                      registry: private-registry.com
+            helm:
+                repositories:
+                    - name: custom-helm-repo
+                      url: https://custom.helm.repo
+                      private: true # Setting private to true will prompt the user for credentials when the --init flag is used
+```
+
+...
+
+```txt
+╰─❯ kruise deploy cd1 -i
+Using config file: /path/to/kruise.yaml
+Please enter your username for the private-registry.com container registry: foo
+Please enter your password for the private-registry.com container registry: ***
+✔ Please confirm your password: █
+```
+
+...
+
+```txt
+╰─❯ kruise deploy cd1 -i
+Using config file: /Users/wardjl/DEC/temp/custom/kruise.yaml
+Please enter your username for the private-registry.com container registry: foo
+Please enter your password for the private-registry.com container registry: ***
+Please confirm your password: ***
+secret/custom-image-pull-secret created
+Please enter your username for the custom-helm-repo Helm repository: foo
+Please enter your password for the custom-helm-repo Helm repository: ***
+✔ Please confirm your password: █
+```
+
+...
+
+```txt
+╰─❯ kruise deploy cd1 -i
+Using config file: /Users/wardjl/DEC/temp/custom/kruise.yaml
+Please enter your username for the private-registry.com container registry: foo
+Please enter your password for the private-registry.com container registry: ***
+Please confirm your password: ***
+secret/custom-image-pull-secret created
+Please enter your username for the custom-helm-repo Helm repository: foo
+Please enter your password for the custom-helm-repo Helm repository: ***
+Please confirm your password: ***
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "custom-helm-repo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+```
+
+This can help keep credentials out of source control and out your shell history!
+
+## Priority Deployments
+
+Kruise can execute batches of deployments in parallel. If you have a set of
+simple deployments in which deployment A does not depend on deployment B in any
+way, you don't need to worry about priorities at all! Just execute kruise with
+the `--concurrent` flag and your deployments will be executed in parallel;
+however, let's say deployment A needs to apply a CustomResource that's defined
+in deployment B. In this case, you would want to specify in the `kruise.yaml`
+that the deployment responsible for creating the CustomResourceDefinition in B
+has a higher priority than the application of that CustomResource in A. This can
+be achieved with the `priority` field, which can be applied to each type of
+installer in Kruise.
+
+Let's revisit the Istio example from earlier:
+
+```yaml
+apiVersion: v1alpha1
+kind: Config
+deploy:
+    deployments:
+        istio:
+            description:
+                deploy: deploy Istio to your k8s cluster
+                delete: delete Istio from your k8s cluster
+            kubectl:
+                manifests:
+                    - namespace: istio-system
+                      priority: 2
+                      paths:
+                          - manifests/istio-gateway.yaml
+            helm:
+                repositories:
+                    - name: istio
+                      url: https://istio-release.storage.googleapis.com/charts
+                charts:
+                    - priority: 1
+                      chartName: base
+                      releaseName: istio-base
+                      namespace: istio-system
+                      chartPath: istio/base
+                      version: 1.14.1
+                      values:
+                          - values/istio-base-values.yaml
+                      installArgs:
+                          - --create-namespace
+                    - priority: 1
+                      chartName: istiod
+                      releaseName: istiod
+                      namespace: istio-system
+                      chartPath: istio/istiod
+                      version: 1.14.1
+                      values:
+                          - values/istiod-values.yaml
+                      installArgs:
+                          - --create-namespace
+                    - priority: 2
+                      chartName: gateway
+                      releaseName: istio-ingressgateway
+                      namespace: istio-system
+                      chartPath: istio/gateway
+                      version: 1.14.1
+                      values:
+                          - values/istio-gateway-values.yaml
+                      setValues:
+                          - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
+                      installArgs:
+                          - --create-namespace
+```
+
+in this example, you can see that the `istio-ingressgateway` is prioritized
+_after_ `istio-base` and `istiod`. If the priorities were all weighted the same
+(and you use the `--concurrent` flag), you'll find that the
+`istio-ingressgateway` gets stuck in an `ImagePullBackOff`.
+
+```txt
+╰─❯ kubectl get pods -n istio-system
+NAME                                    READY   STATUS             RESTARTS   AGE
+istio-ingressgateway-8584fcc547-jg8rb   0/1     ImagePullBackOff   0          5m26s
+istiod-766b78ccb7-2bjdx                 1/1     Running            0          5m26s
+```
+
+if we describe the pod, we can see in the events that k8s failed to pull the
+`auto` image, which is a bit out of the ordinary.
+
+```txt
+Events:
+  Type     Reason     Age                    From               Message
+  ----     ------     ----                   ----               -------
+  Normal   Scheduled  6m12s                  default-scheduler  Successfully assigned istio-system/istio-ingressgateway-8584fcc547-jg8rb to minikube
+  Normal   Pulling    4m43s (x4 over 6m11s)  kubelet            Pulling image "auto"
+  Warning  Failed     4m42s (x4 over 6m11s)  kubelet            Failed to pull image "auto": rpc error: code = Unknown desc = Error response from daemon: pull access denied for auto, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+  Warning  Failed     4m42s (x4 over 6m11s)  kubelet            Error: ErrImagePull
+  Warning  Failed     4m15s (x6 over 6m10s)  kubelet            Error: ImagePullBackOff
+  Normal   BackOff    62s (x20 over 6m10s)   kubelet            Back-off pulling image "auto"
+```
+
+This seems like Istio magic at work... let's check
+[ArtifactHub](https://artifacthub.io/packages/helm/istio-official/gateway?modal=template&template=deployment.yaml)
+
+```yaml
+containers:
+    - name: istio-proxy
+      # "auto" will be populated at runtime by the mutating webhook. See https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#customizing-injection
+      image: auto
+```
+
+Ah so the image is set by the mutating webhook... but apparently deploying the
+`istio-ingressgateway` in parallel with the Istio control plane (`istiod`)
+results in the webhook failing to modify the `istio-proxy` image. If we bump the
+priority of the `istio-ingressgateway` deployment, our problem should hopefully
+go away.
+
+```txt
+╰─❯ kubectl get pods -n istio-system
+NAME                                    READY   STATUS    RESTARTS   AGE
+istio-ingressgateway-8584fcc547-rw882   1/1     Running   0          26s
+istiod-766b78ccb7-cpnvd                 1/1     Running   0          34s
+```
+
+Much better, and we can see that mutating webhook did indeed change our image
+when it was given the chance.
+
+```txt
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  80s                 default-scheduler  Successfully assigned istio-system/istio-ingressgateway-8584fcc547-rw882 to minikube
+  Normal   Pulling    80s                 kubelet            Pulling image "docker.io/istio/proxyv2:1.14.1"
+  Normal   Pulled     79s                 kubelet            Successfully pulled image "docker.io/istio/proxyv2:1.14.1" in 523.8445ms
+  Normal   Created    79s                 kubelet            Created container istio-proxy
+  Normal   Started    79s                 kubelet            Started container istio-proxy
+```
+
+So this was a very long-winded and complicated explanation. Why?
+
+To explain that just because you _can_ deploy things concurrently doesn't mean
+you have to or even should. It introduces extra complexity and should be used
+with caution. It will serve you better when deploying larger tech stacks in
+which you are familiar with the interdepencies of the stack.
