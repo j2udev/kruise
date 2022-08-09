@@ -97,10 +97,10 @@ flexibility and functionality. The implementation details of deployments are
 contained in the manifest, but the CLI will display an option that abstracts
 away the deployment details.
 
-For example, let's consider a team that has decided to leverage Istio as their
-ingress and service mesh solution. The team is composed of frontend devs,
-backend devs, and a devops engineer. The devops engineer can determine what an
-abstract Istio "deployment" looks like:
+For example, let's consider a team that has decided to leverage
+[Istio](https://istio.io/) as their ingress and service mesh solution. The team
+is composed of frontend devs, backend devs, and a devops engineer. The devops
+engineer can determine what an abstract Istio "deployment" looks like:
 
 ```yaml
 apiVersion: v1alpha1
@@ -194,7 +194,7 @@ As much as possible, Kruise adds `shallow-dry-run` capability to each command
 stdout).
 
 In the previous example, a backend dev is asked by another team how they are
-deploying Istio. Rather than having tap the devops engineer on the shoulder,
+deploying Istio. Rather than having to tap the devops engineer on the shoulder,
 they can simply run:
 
 ```txt
