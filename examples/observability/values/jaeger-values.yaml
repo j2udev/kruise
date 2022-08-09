@@ -1,0 +1,22 @@
+provisionDataStore:
+  cassandra: false
+allInOne:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 256m
+      memory: 128Mi
+  extraEnv:
+    - name: QUERY_BASE_PATH
+      value: /tracing
+storage:
+  type: none
+agent:
+  enabled: false
+collector:
+  enabled: false
+query:
+  enabled: false

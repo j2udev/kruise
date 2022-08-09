@@ -1,49 +1,94 @@
 package kruise
 
-import (
-	"strings"
+import "github.com/spf13/pflag"
 
-	"github.com/spf13/cobra"
-	"github.com/thoas/go-funk"
-)
+// Deploy determines valid deployments from args and passes the cobra Cmd
+// FlagSet to the Uninstall function
+func Deploy(fs *pflag.FlagSet, args []string) {
+	init, err := fs.GetBool("init")
+	Fatal(err)
+	d := getValidDeployments(args)
+	if init {
+		i := getValidInitDeployments(args)
+		Init(fs, i...)
+	}
+	Install(fs, d...)
+}
 
 // GetDeployOptions aggregates deploy options from all deployers
-func GetDeployOptions() []Option {
-	opts := GetHelmDeployOptions()
+func GetDeployOptions() Options {
+	deps := Kfg.Manifest.Deploy.Deployments
+	var opts Options
+	for k, v := range deps {
+		args := []string{k}
+		opts = append(opts, newOption(append(args, v.Aliases...), v.Description.Deploy))
+	}
 	return opts
 }
 
-// GetHelmDeployOptions gets deploy options from the Helm deployer
-func GetHelmDeployOptions() []Option {
-	var opts []Option
-	deps := NewHelmDeployments(Kfg.Manifest.Deploy.Helm)
-	for _, dep := range deps {
-		opts = append(opts, NewOption(dep.Option))
+// Delete determines valid deployments from args and passes the cobra Cmd
+// FlagSet to the Uninstall function
+func Delete(fs *pflag.FlagSet, args []string) {
+	d := getValidDeployments(args)
+	Uninstall(fs, d...)
+}
+
+// GetDeleteOptions aggregates delete options from all deployers
+func GetDeleteOptions() Options {
+	deps := Kfg.Manifest.Deploy.Deployments
+	var opts Options
+	for k, v := range deps {
+		args := []string{k}
+		opts = append(opts, newOption(append(args, v.Aliases...), v.Description.Delete))
 	}
 	return opts
 }
 
 // GetValidDeployArgs aggregates valid deploy arguments from all deployers
 func GetValidDeployArgs() []string {
-	args := GetValidArgs(GetDeployOptions())
+	args := GetDeployOptions().getValidArgs()
 	return args
 }
 
-// GetValidDeployments gets all valid deployments given passed arguments
-func GetValidDeployments(args []string) []IInstaller {
-	var validDeployments []IInstaller
-	deps := NewHelmDeployments(Kfg.Manifest.Deploy.Helm)
-	for _, dep := range deps {
-		for _, arg := range args {
-			if funk.Contains(strings.Split(dep.Arguments, ", "), arg) {
-				validDeployments = append(validDeployments, dep)
+// getValidDeployments gets all valid deployments given passed arguments
+func getValidDeployments(args []string) Installers {
+	var installers Installers
+	deps := Kfg.Manifest.Deploy.Deployments
+	for k, v := range deps {
+		if contains(args, k) || containsAny(args, v.Aliases...) {
+			charts := newHelmDeployment(v.Helm).getHelmCharts()
+			manifests := newKubectlDeployment(v.Kubectl).getKubectlManifests()
+			for _, c := range charts {
+				installers = append(installers, c)
+			}
+			for _, m := range manifests {
+				installers = append(installers, m)
 			}
 		}
 	}
-	return validDeployments
+	return installers
 }
 
-// Deploy is a cobra Run function
-func Deploy(cmd *cobra.Command, args []string) {
-	Install(cmd.Flags(), GetValidDeployments(args)...)
+// getValidInitDeployments gets all valid initial deployments given passed arguments
+func getValidInitDeployments(args []string) Installers {
+	var x void
+	deps := Kfg.Manifest.Deploy.Deployments
+	set := make(map[Installer]void)
+	for k, v := range deps {
+		if contains(args, k) || containsAny(args, v.Aliases...) {
+			secrets := newKubectlDeployment(v.Kubectl).getKubectlSecrets()
+			repositories := newHelmDeployment(v.Helm).getHelmRepositories()
+			for _, s := range secrets {
+				set[s] = x
+			}
+			for _, r := range repositories {
+				set[r] = x
+			}
+		}
+	}
+	var keys Installers
+	for k := range set {
+		keys = append(keys, k)
+	}
+	return keys
 }

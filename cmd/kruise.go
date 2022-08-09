@@ -16,12 +16,25 @@ func NewKruiseKmd() kruise.Kommand {
 			NewDeleteKmd(),
 		).
 		WithPersistentFlags(NewKruisePersistentFlags()).
-		WithPersistentPreRunFunc(setLogLevel).
+		WithPersistentPreRunFunc(persistentPreRun).
 		Version("0.1.0").
 		Build()
 }
 
-func setLogLevel(cmd *cobra.Command, args []string) {
+// NewKruisePersistentFlags creates flags for the kruise command
+//
+// See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
+func NewKruisePersistentFlags() *pflag.FlagSet {
+	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
+	pfs.StringP("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)")
+	return pfs
+}
+
+func persistentPreRun(cmd *cobra.Command, args []string) {
+	setLogLevel(cmd)
+}
+
+func setLogLevel(cmd *cobra.Command) {
 	logger := kruise.Logger
 	lvl, err := cmd.Flags().GetString("verbosity")
 	kruise.Error(err)
@@ -39,14 +52,4 @@ func setLogLevel(cmd *cobra.Command, args []string) {
 	default:
 		logger.Fatalf("Invalid verbosity level: %s", lvl)
 	}
-}
-
-// NewKruisePersistentFlags creates flags for the kruise command
-//
-// See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
-func NewKruisePersistentFlags() *pflag.FlagSet {
-	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
-	pfs.StringVarP(&kruise.Kfg.Metadata.Override, "config", "C", "", "specify a path to a kruise manifest file")
-	pfs.StringP("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)")
-	return pfs
 }

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/j2udevelopment/kruise/pkg/kruise/schema/v1alpha1"
 	"github.com/j2udevelopment/kruise/pkg/kruise/schema/version"
 	"github.com/thoas/go-funk"
 )
@@ -13,6 +14,7 @@ type (
 var (
 	SchemaVersionsV1 = Versions{
 		{APIVersion: latest.Version, Factory: latest.NewKruiseConfig},
+		{APIVersion: v1alpha1.Version, Factory: v1alpha1.NewKruiseConfig},
 	}
 )
 

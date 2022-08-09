@@ -19,7 +19,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/main.go",
-      "args": ["deploy", "kafka", "prom-op", "-dp", "--verbosity=trace"],
+      "args": ["deploy", "mongo", "prom-op", "-dc", "--verbosity=trace"],
       "console": "integratedTerminal"
     },
     {

@@ -1,28 +1,26 @@
 package kruise
 
-import (
-	"strings"
+import "strings"
 
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+type (
+	Option struct {
+		Arguments   string
+		Description string
+	}
+
+	Options []Option
 )
 
-type Option latest.Option
-
-func NewOption(o latest.Option) Option {
-	return Option(o)
-}
-
-func NewOptions(opts []latest.Option) []Option {
-	var o []Option
-	for _, opt := range opts {
-		o = append(o, NewOption(opt))
+func newOption(args []string, desc string) Option {
+	return Option{
+		Arguments:   strings.Join(args, ", "),
+		Description: desc,
 	}
-	return o
 }
 
-func GetValidArgs(opts []Option) []string {
+func (o Options) getValidArgs() []string {
 	var valid []string
-	for _, opt := range opts {
+	for _, opt := range o {
 		valid = append(valid, strings.Split(opt.Arguments, ", ")...)
 	}
 	return valid

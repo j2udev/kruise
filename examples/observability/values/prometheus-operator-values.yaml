@@ -1,0 +1,31 @@
+prometheusOperator:
+  createCustomResource: false
+grafana:
+  enabled: true
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.logging:3100/
+      access: proxy
+      editable: true
+    - name: Jaeger
+      type: jaeger
+      uid: jaeger
+      url: http://jaeger-query.tracing:16686/tracing
+      access: browser
+      editable: true
+  sidecar:
+    dashboards:
+      provider:
+        allowUiUpdates: true
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/monitoring/"
+      serve_from_sub_path: true
+    auth:
+      disable_login_form: true
+      disable_signout_menu: true
+    auth.anonymous:
+      enabled: true
+      org_role: Admin

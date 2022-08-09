@@ -1,0 +1,11 @@
+global:
+  configValidation: false
+  tracer:
+    zipkin:
+      address: jaeger-collector.observability:9411
+meshConfig:
+  enableTracing: true
+pilot:
+  autoscaleMax: 3
+  autoscaleMin: 1
+  traceSampling: 100

@@ -1,0 +1,120 @@
+apiVersion: v1alpha1
+kind: Config
+deploy:
+  deployments:
+    istio:
+      description:
+        deploy: deploy Istio to your k8s cluster
+        delete: delete Istio from your k8s cluster
+      kubectl:
+        manifests:
+        - namespace: istio-system
+          priority: 2
+          paths:
+          - manifests/istio-gateway.yaml
+      helm:
+        repositories:
+        - name: istio
+          url: https://istio-release.storage.googleapis.com/charts
+        charts:
+        - priority: 1
+          chartName: base
+          releaseName: istio-base
+          namespace: istio-system
+          chartPath: istio/base
+          version: 1.14.1
+          values:
+          - values/istio-base-values.yaml
+          installArgs:
+          - --create-namespace
+        - priority: 1
+          chartName: istiod
+          releaseName: istiod
+          namespace: istio-system
+          chartPath: istio/istiod
+          version: 1.14.1
+          values:
+          - values/istiod-values.yaml
+          installArgs:
+          - --create-namespace
+        - priority: 2
+          chartName: gateway
+          releaseName: istio-ingressgateway
+          namespace: istio-system
+          chartPath: istio/gateway
+          version: 1.14.1
+          values:
+          - values/istio-gateway-values.yaml
+          setValues:
+          - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
+          installArgs:
+          - --create-namespace
+    jaeger:
+      description:
+        deploy: deploy Jaeger to your k8s cluster
+        delete: delete Jaeger from your k8s cluster
+      kubectl:
+        manifests:
+        - namespace: tracing
+          priority: 3
+          paths:
+          - manifests/jaeger-virtual-service.yaml
+      helm:
+        repositories:
+        - name: jaegertracing
+          url: https://jaegertracing.github.io/helm-charts
+        charts:
+        - priority: 3
+          chartName: jaeger
+          releaseName: jaeger
+          namespace: tracing
+          chartPath: jaegertracing/jaeger
+          version: 0.57.1
+          values:
+          - values/jaeger-values.yaml
+          installArgs:
+          - --create-namespace
+    loki:
+      description:
+        deploy: deploy Loki to your k8s cluster
+        delete: delete Loki from your k8s cluster
+      helm:
+        repositories:
+        - name: grafana
+          url: https://grafana.github.io/helm-charts
+        charts:
+        - priority: 3
+          chartName: loki
+          releaseName: loki
+          namespace: logging
+          chartPath: grafana/loki-stack
+          version: 2.6.5
+          installArgs:
+          - --create-namespace
+    prometheus-operator:
+      aliases:
+      - prom-op
+      description:
+        deploy: deploy Prometheus Operator to your k8s cluster
+        delete: delete Prometheus Operator from your k8s cluster
+      kubectl:
+        manifests:
+        - namespace: monitoring
+          priority: 2
+          paths:
+          - manifests/grafana-virtual-service.yaml
+      helm:
+        repositories:
+        - name: prometheus-community
+          url: https://prometheus-community.github.io/helm-charts
+        charts:
+        - priority: 2
+          chartName: kube-prometheus-stack
+          releaseName: prometheus-operator
+          namespace: monitoring
+          chartPath: prometheus-community/kube-prometheus-stack
+          version: 36.0.2
+          values:
+          - values/prometheus-operator-values.yaml
+          installArgs:
+          - --create-namespace

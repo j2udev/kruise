@@ -8,155 +8,163 @@ import (
 )
 
 type (
-	IInstaller interface {
-		Init(dryRun bool) error
-		Install(dryRun bool) error
-		Uninstall(dryRun bool) error
+	Installer interface {
+		Install(fs *pflag.FlagSet)
+		Uninstall(fs *pflag.FlagSet)
+		GetPriority() int
 	}
+	Installers []Installer
 )
 
-func Install(f *pflag.FlagSet, installer ...IInstaller) {
-	shallowDryRun, err := f.GetBool("shallow-dry-run")
-	Fatal(err)
-	concurrent, err := f.GetBool("concurrent")
-	Fatal(err)
-	parallel, err := f.GetBool("parallel")
-	Fatal(err)
-	init, err := f.GetBool("init")
-	Fatal(err)
-	if init {
-		for _, i := range installer {
-			if err := i.Init(shallowDryRun); err != nil {
-				Fatal(err)
+// Init invokes the Install function for all Installers that should only be
+// installed during initialization (i.e. HelmRepositories and KubectlSecrets)
+func Init(fs *pflag.FlagSet, installers ...Installer) {
+	hasHelmDeployment := false
+	u := make(map[string]Installer)
+	for _, i := range installers {
+		switch d := i.(type) {
+		case KubectlSecret:
+			// TODO: deduplicate the creation of secrets
+			i.Install(fs)
+		case HelmRepository:
+			hasHelmDeployment = true
+			repo := d.Url
+			if _, ok := u[repo]; !ok {
+				u[repo] = i
+				i.Install(fs)
 			}
+		default:
+			Logger.Errorf("Invalid installer for the Init() function: %v", d)
 		}
-		Fatal(HelmRepoUpdate(shallowDryRun))
 	}
-	switch {
-	case concurrent:
-		Logger.Trace("Running concurrently")
-		m := priorityMap(installer...)
-		var keys []int
-		for k := range m {
-			keys = append(keys, k)
-		}
-		sort.Ints(keys)
-		for _, k := range keys {
-			wg := sync.WaitGroup{}
-			Logger.Debugf("Priority %d waitgroup starting", k)
-			wg.Add(len(m[k]))
-			installc(m[k], shallowDryRun, &wg)
-			wg.Wait()
-			Logger.Debugf("Priority %d waitgroup stopping", k)
-		}
-		Logger.Trace("Finished running concurrently")
-	case parallel:
-		Logger.Trace("Running in parallel")
-		wg := sync.WaitGroup{}
-		for _, i := range installer {
-			wg.Add(1)
-			go installp(i, shallowDryRun, &wg)
-		}
-		wg.Wait()
-		Logger.Trace("Finished running in parallel")
-	default:
-		Logger.Trace("Running sequentially")
-		for _, i := range installer {
-			install(i, shallowDryRun)
-		}
-		Logger.Trace("Finished running sequentially")
+	// if a Helm installer was in the list of the installers to initialize,
+	// perform a helm repo update at the end
+	if hasHelmDeployment {
+		helmRepoUpdate(fs)
 	}
 }
 
-func Uninstall(f *pflag.FlagSet, installer ...IInstaller) {
-	shallowDryRun, err := f.GetBool("shallow-dry-run")
-	Fatal(err)
-	concurrent, err := f.GetBool("concurrent")
-	Fatal(err)
-	parallel, err := f.GetBool("parallel")
+// Install invokes the Install function for all Installers passed
+func Install(fs *pflag.FlagSet, installers ...Installer) {
+	concurrent, err := fs.GetBool("concurrent")
 	Fatal(err)
 	switch {
 	case concurrent:
-		Logger.Trace("Running concurrently")
-		m := priorityMap(installer...)
-		var keys []int
-		for k := range m {
-			keys = append(keys, k)
-		}
-		sort.Ints(keys)
-		for _, k := range keys {
-			wg := sync.WaitGroup{}
-			Logger.Debugf("Priority %d waitgroup starting", k)
-			wg.Add(len(m[k]))
-			uninstallc(m[k], shallowDryRun, &wg)
-			wg.Wait()
-			Logger.Debugf("Priority %d waitgroup stopping", k)
-		}
-		Logger.Trace("Finished running concurrently")
-	case parallel:
-		Logger.Trace("Running in parallel")
+		installc(fs, installers...)
+	default:
+		installs(fs, installers...)
+	}
+}
+
+// Uninstall invokes the Uninstall function for all Installers passed
+func Uninstall(fs *pflag.FlagSet, installers ...Installer) {
+	concurrent, err := fs.GetBool("concurrent")
+	Fatal(err)
+	switch {
+	case concurrent:
+		uninstallc(fs, installers...)
+	default:
+		uninstalls(fs, installers...)
+	}
+}
+
+// installs is used to invoke the install functions of the given Installers
+func installs(fs *pflag.FlagSet, installers ...Installer) {
+	for _, i := range installers {
+		install(i, fs)
+	}
+}
+
+// installc is used to concurrently invoke the install functions of the given
+// Installers
+//
+// Waitgroups are contructed based on Installer Priority where each batch of
+// prioritized deployments are executed concurrently
+func installc(fs *pflag.FlagSet, installers ...Installer) {
+	m := priorityMap(installers...)
+	var keys []int
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
 		wg := sync.WaitGroup{}
-		for _, i := range installer {
-			wg.Add(1)
-			go uninstallp(i, shallowDryRun, &wg)
+		Logger.Infof("Priority %d waitgroup starting", k)
+		wg.Add(len(m[k]))
+		for _, i := range m[k] {
+			go installp(i, fs, &wg)
 		}
 		wg.Wait()
-		Logger.Trace("Finished running in parallel")
-	default:
-		Logger.Trace("Running sequentially")
-		for _, i := range installer {
-			uninstall(i, shallowDryRun)
+		Logger.Debugf("Priority %d waitgroup stopping", k)
+	}
+	Logger.Trace("Finished running concurrently")
+}
+
+// installp is used to invoke the install function of a given Installer and
+// call wg.Done()
+func installp(i Installer, fs *pflag.FlagSet, wg *sync.WaitGroup) {
+	defer wg.Done()
+	install(i, fs)
+}
+
+// install is used to invoke the install function of a given Installer
+func install(i Installer, fs *pflag.FlagSet) {
+	i.Install(fs)
+}
+
+// uninstalls is used to invoke the uninstall functions of the given Installers
+func uninstalls(fs *pflag.FlagSet, installers ...Installer) {
+	for _, i := range installers {
+		i.Uninstall(fs)
+	}
+}
+
+// uninstallc is used to concurrently invoke the uninstall functions of the given
+// Installers
+//
+// Waitgroups are contructed based on Installer Priority where each batch of
+// prioritized deployments are executed concurrently
+func uninstallc(fs *pflag.FlagSet, installers ...Installer) {
+	m := priorityMap(installers...)
+	var keys []int
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
+		wg := sync.WaitGroup{}
+		Logger.Infof("Priority %d waitgroup starting", k)
+		wg.Add(len(m[k]))
+		for _, i := range m[k] {
+			go uninstallp(i, fs, &wg)
 		}
-		Logger.Trace("Finished running sequentially")
+		wg.Wait()
+		Logger.Debugf("Priority %d waitgroup stopping", k)
 	}
+	Logger.Trace("Finished running concurrently")
 }
 
-func install(i IInstaller, s bool) {
-	if err := i.Install(s); err != nil {
-		Fatal(err)
-	}
-}
-
-func installp(i IInstaller, s bool, wg *sync.WaitGroup) {
+// uninstallp is used to invoke the uninstall function of a given Installer and
+// call wg.Done()
+func uninstallp(i Installer, fs *pflag.FlagSet, wg *sync.WaitGroup) {
 	defer wg.Done()
-	if err := i.Install(s); err != nil {
-		Fatal(err)
-	}
+	uninstall(i, fs)
 }
 
-func installc(installers []IInstaller, s bool, wg *sync.WaitGroup) {
-	for _, i := range installers {
-		go installp(i, s, wg)
-	}
+// uninstall is used to invoke the uninstall function of a given Installer
+func uninstall(i Installer, fs *pflag.FlagSet) {
+	i.Uninstall(fs)
 }
 
-func uninstall(i IInstaller, s bool) {
-	if err := i.Uninstall(s); err != nil {
-		Fatal(err)
-	}
-}
-
-func uninstallp(i IInstaller, s bool, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if err := i.Uninstall(s); err != nil {
-		Fatal(err)
-	}
-}
-
-func uninstallc(installers []IInstaller, s bool, wg *sync.WaitGroup) {
-	for _, i := range installers {
-		go uninstallp(i, s, wg)
-	}
-}
-
-func priorityMap(installers ...IInstaller) map[int][]IInstaller {
-	m := make(map[int][]IInstaller)
-	for _, i := range installers {
-		d := i.(HelmDeployment)
-		if val, ok := m[d.Priority]; ok {
-			m[d.Priority] = append(val, d)
+// priorityMap is used to construct a map of prioritized Installers
+func priorityMap(installers ...Installer) map[int]Installers {
+	m := make(map[int]Installers)
+	for _, installer := range installers {
+		p := installer.GetPriority()
+		if existingEntry, ok := m[p]; ok {
+			m[p] = append(existingEntry, installer)
 		} else {
-			m[d.Priority] = []IInstaller{d}
+			m[p] = Installers{installer}
 		}
 	}
 	return m

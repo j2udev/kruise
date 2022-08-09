@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 )
 
@@ -13,6 +12,7 @@ type (
 		Name   string
 		Args   []string
 		DryRun bool
+		StdOut bool
 	}
 
 	CommandBuilder struct {
@@ -25,39 +25,41 @@ type (
 
 	ICommandBuilder interface {
 		WithArgs(a []string) ICommandBuilder
-		WithDryRun() ICommandBuilder
+		WithDryRun(dr bool) ICommandBuilder
+		WithNoStdOut() ICommandBuilder
 		Build() ICommand
 	}
 )
 
-// NewCmd creates a new CommandBuilder for executing CLI commands
 func NewCmd(name string) ICommandBuilder {
-	cmd := Command{Name: name, DryRun: false}
-	return CommandBuilder{cmd}
+	cmd := Command{Name: name, DryRun: false, StdOut: true}
+	return CommandBuilder{cmd}.WithDryRun(false)
 }
 
-// WithArgs adds arguments to the CLI command
 func (c CommandBuilder) WithArgs(args []string) ICommandBuilder {
 	c.Args = args
 	return c
 }
 
-// WithDryRun prints the command instead of executing it when Execute() is called
-func (c CommandBuilder) WithDryRun() ICommandBuilder {
-	c.DryRun = true
+func (c CommandBuilder) WithDryRun(dr bool) ICommandBuilder {
+	c.DryRun = dr
 	return c
 }
 
-// Build builds the CommandBuilder into a Command
+func (c CommandBuilder) WithNoStdOut() ICommandBuilder {
+	c.StdOut = false
+	return c
+}
+
 func (c CommandBuilder) Build() ICommand {
 	return Command{
 		Name:   c.Name,
 		Args:   c.Args,
 		DryRun: c.DryRun,
+		StdOut: c.StdOut,
 	}
 }
 
-// Execute either executes the CLI command or prints it
 func (c Command) Execute() error {
 	cmd := exec.Command(c.Name, c.Args...)
 	if c.DryRun {
@@ -66,17 +68,17 @@ func (c Command) Execute() error {
 		stderr, _ := cmd.StderrPipe()
 		stdout, _ := cmd.StdoutPipe()
 		if err := cmd.Start(); err != nil {
-			log.Printf("%s", err)
 			Fatal(cmd.Wait())
 			return err
 		}
 		cmdErr, _ := io.ReadAll(stderr)
 		cmdOut, _ := io.ReadAll(stdout)
 		if len(cmdErr) > 0 {
-			log.Printf("%s", cmdErr)
 			return errors.New(string(cmdErr))
 		}
-		fmt.Printf("%s", cmdOut)
+		if c.StdOut {
+			fmt.Printf("%s", cmdOut)
+		}
 		Fatal(cmd.Wait())
 	}
 	return nil
