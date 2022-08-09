@@ -42,7 +42,7 @@ func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
 	if !d {
 		checkHelm()
 	}
-	helmExecute(d, c.uninstallArgs(fs))
+	Warn(helmExecute(d, c.uninstallArgs(fs)))
 }
 
 // GetPriority is used to get the priority of the installer
@@ -57,7 +57,7 @@ func (r HelmRepository) Install(fs *pflag.FlagSet) {
 	if !d {
 		checkHelm()
 	}
-	helmExecute(d, r.installArgs(fs))
+	Warn(helmExecute(d, r.installArgs(fs)))
 }
 
 // Uninstall is used to execute a Helm repo remove command
@@ -230,7 +230,7 @@ func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
 func helmRepoUpdate(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("shallow-dry-run")
 	Fatal(err)
-	helmExecute(d, []string{"repo", "update"})
+	Warn(helmExecute(d, []string{"repo", "update"}))
 }
 
 // helmExecute is a helper function for executing a Helm command given a set of

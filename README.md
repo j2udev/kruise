@@ -213,11 +213,12 @@ Using config file: /path/to/kruise.yaml
 
 Preparing a new deployment can often require a few initialization steps. Whether
 that's creating a secret, adding a Helm repository, etc. Often these steps don't
-need to be executed in subsequent deployments and can be opted into with the
-`--init` flag. Applying this flag will determine if any of the passed arguments
-need to have k8s secrets created or Helm repositories added. Kruise will prompt
-you for credentials if needed (if k8s secret(s) or `private` Helm repositories
-are associated with deployment used).
+need to be executed in subsequent deployments so we wouldn't want to execute
+them everytime. Instead, we can opt into them with the `--init` flag. Applying
+this flag will determine if any of the passed arguments need to have k8s secrets
+created or Helm repositories added. Kruise will prompt you for credentials if
+needed (if k8s secret(s) or `private` Helm repositories are associated with
+deployment used).
 
 The following manifest will result in the user being prompted for credentials to
 authenticate against the specified container registry. It will also prompt the
