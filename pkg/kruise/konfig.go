@@ -86,4 +86,5 @@ func (k *Konfig) unmarshalExactConfig() {
 	if err := viper.UnmarshalExact(&k.Manifest); err != nil {
 		Fatalf(err, "Unable to decode config into struct")
 	}
+	Logger.Debug("Config successfully unmarshalled!")
 }

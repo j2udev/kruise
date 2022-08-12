@@ -1,6 +1,9 @@
 package kruise
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/spf13/pflag"
+)
 
 // Deploy determines valid deployments from args and passes the cobra Cmd
 // FlagSet to the Uninstall function
@@ -53,17 +56,12 @@ func GetValidDeployArgs() []string {
 // getValidDeployments gets all valid deployments given passed arguments
 func getValidDeployments(args []string) Installers {
 	var installers Installers
-	deps := Kfg.Manifest.Deploy.Deployments
-	for k, v := range deps {
-		if contains(args, k) || containsAny(args, v.Aliases...) {
-			charts := newHelmDeployment(v.Helm).getHelmCharts()
-			manifests := newKubectlDeployment(v.Kubectl).getKubectlManifests()
-			for _, c := range charts {
-				installers = append(installers, c)
-			}
-			for _, m := range manifests {
-				installers = append(installers, m)
-			}
+	for _, a := range args {
+		if d, ok := argIsValid(a); ok {
+			charts := newHelmDeployment(d.Helm).getHelmCharts()
+			manifests := newKubectlDeployment(d.Kubectl).getKubectlManifests()
+			installers = append(installers, toInstallers(charts)...)
+			installers = append(installers, toInstallers(manifests)...)
 		}
 	}
 	return installers
@@ -91,4 +89,19 @@ func getValidInitDeployments(args []string) Installers {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+// argIsValid is used to determine if the passed argument is a valid deployment
+// which preserves the order of the passed arguments
+func argIsValid(arg string) (latest.Deployment, bool) {
+	deps := Kfg.Manifest.Deploy.Deployments
+	if _, ok := deps[arg]; ok {
+		return deps[arg], true
+	}
+	for _, v := range deps {
+		if containsAny(v.Aliases, arg) {
+			return v, true
+		}
+	}
+	return latest.Deployment{}, false
 }

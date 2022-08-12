@@ -13,7 +13,10 @@ type (
 		Uninstall(fs *pflag.FlagSet)
 		GetPriority() int
 	}
-	Installers []Installer
+	Installers      []Installer
+	KruiseInstaller interface {
+		HelmRepository | HelmChart | KubectlSecret | KubectlManifest
+	}
 )
 
 // Init invokes the Install function for all Installers that should only be
@@ -168,4 +171,12 @@ func priorityMap(installers ...Installer) map[int]Installers {
 		}
 	}
 	return m
+}
+
+func toInstallers[T KruiseInstaller](t []T) Installers {
+	var installers Installers
+	for _, r := range t {
+		installers = append(installers, Installer(r))
+	}
+	return installers
 }
