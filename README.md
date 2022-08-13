@@ -26,14 +26,11 @@ the choice to execute individual/multiple things defined by the manifest.
 If a `skaffold.yaml` specifies that it _should_ deploy x, y, and z, running
 `skaffold deploy` will do just that. If you want to do some subset of that
 deployment, you'd need to make a separate `skaffold.yaml` (or use their
-[profiles](https://skaffold.dev/docs/environment/profiles/) feature which I've
-personally used to _some_ success in the past, but have also encountered quite a
-few
-[issues](https://github.com/GoogleContainerTools/skaffold/issues?q=is%3Aissue+profiles)
-over their many releases). If a `kruise.yaml` specifies that it _can_ deploy x,
-y, and z, it will present those options to the user when they execute the deploy
-command. This means you can `kruise deploy x z` or `kruise deploy y` or
-`kruise deploy x z y` or any combination of those options.
+[profiles](https://skaffold.dev/docs/environment/profiles/), but YMMV). If a
+`kruise.yaml` specifies that it _can_ deploy x, y, and z, it will present those
+options to the user when they execute the deploy command. This means you can
+`kruise deploy x z` or `kruise deploy y` or `kruise deploy x z y` or any
+combination of those options.
 
 > Ok, so how do I work this thing?
 
@@ -45,12 +42,13 @@ you'll find in the examples folder should help with crafting your own
 
 By default, Kruise will check three locations for the existence of a
 `kruise.yaml`. In order of priority, first, it will check your current working
-directory. Second it will check your XDG_CONFIG_HOME, which can be set with an
-environment variable. If it is not set, you can refer to
-[the xdg package](https://github.com/adrg/xdg/blob/master/README.md) which
-explains what the different xdg paths default to based on operating system.
-Finally, `$HOME` will be checked for the existence of a `.kruise.yaml` file. The
-path to your config can be overridden with the `KRUISE_CONFIG` environment
+directory. Second it will check `$XDG_CONFIG_HOME/kruise/kruise.yaml`. If the
+`XDG_CONFIG_HOME` environment variable is not set The default location on Mac is
+`~/Library/Application Support`, on Unix is `~/.config`, and on Windows is
+`LocalAppData` which falls back to `%LOCALAPPDATA%`. Finally, `$HOME` will be
+checked for the existence of a `.kruise.yaml` file.
+
+The path to your config can be overridden with the `KRUISE_CONFIG` environment
 variable. You can set this in your bashrc, zshrc, etc for a persistent override,
 or you can set it inline for quickly targetting different configuration files.
 
@@ -217,7 +215,7 @@ need to be executed in subsequent deployments so we wouldn't want to execute
 them everytime. Instead, we can opt into them with the `--init` flag. Applying
 this flag will determine if any of the passed arguments need to have k8s secrets
 created or Helm repositories added. Kruise will prompt you for credentials if
-needed (if k8s secret(s) or `private` Helm repositories are associated with
+needed (if k8s secret(s) or `private` Helm repositories are associated with the
 deployment used).
 
 The following manifest will result in the user being prompted for credentials to
