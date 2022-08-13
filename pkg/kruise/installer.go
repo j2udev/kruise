@@ -8,12 +8,16 @@ import (
 )
 
 type (
+	// Installer represents an interface for generic objects that can be
+	// installed and uninstalled
 	Installer interface {
 		Install(fs *pflag.FlagSet)
 		Uninstall(fs *pflag.FlagSet)
 		GetPriority() int
 	}
-	Installers      []Installer
+	// Installers represents a slice of Installer objects
+	Installers []Installer
+	// KruiseInstaller represents a union type of Kruise Installer implementations
 	KruiseInstaller interface {
 		HelmRepository | HelmChart | KubectlSecret | KubectlManifest
 	}

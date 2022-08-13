@@ -10,12 +10,19 @@ import (
 )
 
 type (
-	HelmDeployment   latest.HelmDeployment
-	HelmRepository   latest.HelmRepository
-	HelmChart        latest.HelmChart
-	HelmDeployments  []HelmDeployment
+	// HelmDeployment encapsulates Helm objects like HelmRepositories and
+	// HelmCharts for a given deployment
+	HelmDeployment latest.HelmDeployment
+	// HelmRepository represents information about a Helm repository
+	HelmRepository latest.HelmRepository
+	// HelmChart represents information about a Helm chart
+	HelmChart latest.HelmChart
+	// HelmDeployments represents a slice of HelmDeployment objects
+	HelmDeployments []HelmDeployment
+	// HelmRepositories represents a slice of HelmRepository objects
 	HelmRepositories []HelmRepository
-	HelmCharts       []HelmChart
+	// HelmCharts represents a slice of HelmChart objects
+	HelmCharts []HelmChart
 )
 
 // Install is used to execute a Helm install command

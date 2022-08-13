@@ -6,6 +6,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// credentialPrompt is used to prompt the user for credentials
 func credentialPrompt(usernamePrompt string, passwordPrompt string) (username string, password string, err error) {
 	validate := func(input string) error {
 		return nil

@@ -8,12 +8,19 @@ import (
 )
 
 type (
-	KubectlDeployment  latest.KubectlDeployment
-	KubectlSecret      latest.KubectlSecret
-	KubectlManifest    latest.KubectlManifest
+	// KubectlDeployment encapsulates Helm objects like KubectlSecrets and
+	// KubectlManifests for a given deployment
+	KubectlDeployment latest.KubectlDeployment
+	// KubectlSecret represents information about a Kubectl secret
+	KubectlSecret latest.KubectlSecret
+	// KubectlManifest represents information about a Kubectl manifest
+	KubectlManifest latest.KubectlManifest
+	// KubectlDeployments represents a slice of KubectlDeployment objects
 	KubectlDeployments []KubectlDeployment
-	KubectlSecrets     []KubectlSecret
-	KubectlManifests   []KubectlManifest
+	// KubectlSecrets represents a slice of KubectlSecret objects
+	KubectlSecrets []KubectlSecret
+	// KubectlManifest represents a slice of KubectlManifest objects
+	KubectlManifests []KubectlManifest
 )
 
 // Install is used to execute a Kubectl apply command

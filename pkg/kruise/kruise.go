@@ -1,3 +1,6 @@
+// Kruise is a black box CLI that is driven by a config
+//
+// Kruise helps with abstractly deploying workloads to Kubernetes
 package kruise
 
 import (
@@ -7,7 +10,11 @@ import (
 )
 
 var (
-	Kfg    *Konfig
+	// Kfg is a global config object for Kruise into which config is unmarshalled
+	Kfg *Konfig
+	// Logger is the global Logrus logger used by Kruise
+	//
+	// Read more about Logrus: https://pkg.go.dev/github.com/sirupsen/logrus
 	Logger *logrus.Logger
 )
 
