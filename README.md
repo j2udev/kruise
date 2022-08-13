@@ -231,18 +231,18 @@ deploy:
             aliases:
                 - cd1
             description:
-                deploy: custom cd1 deployment description
-                delete: custom cd1 deployment description
+                deploy: cd1 deploy description
+                delete: cd1 delete description
             kubectl:
                 secrets:
                     - type: docker-registry
-                      name: custom-image-pull-secret
-                      namespace: custom
+                      name: image-pull-secret
+                      namespace: default
                       registry: private-registry.com
             helm:
                 repositories:
-                    - name: custom-helm-repo
-                      url: https://custom.helm.repo
+                    - name: private
+                      url: https://private.helm.repo
                       private: true # Setting private to true will prompt the user for credentials when the --init flag is used
 ```
 
@@ -265,8 +265,8 @@ Please enter your username for the private-registry.com container registry: foo
 Please enter your password for the private-registry.com container registry: ***
 Please confirm your password: ***
 secret/custom-image-pull-secret created
-Please enter your username for the custom-helm-repo Helm repository: foo
-Please enter your password for the custom-helm-repo Helm repository: ***
+Please enter your username for the private Helm repository: foo
+Please enter your password for the private Helm repository: ***
 ✔ Please confirm your password: █
 ```
 
@@ -279,11 +279,11 @@ Please enter your username for the private-registry.com container registry: foo
 Please enter your password for the private-registry.com container registry: ***
 Please confirm your password: ***
 secret/custom-image-pull-secret created
-Please enter your username for the custom-helm-repo Helm repository: foo
-Please enter your password for the custom-helm-repo Helm repository: ***
+Please enter your username for the private Helm repository: foo
+Please enter your password for the private Helm repository: ***
 Please confirm your password: ***
 Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "custom-helm-repo" chart repository
+...Successfully got an update from the "private" chart repository
 Update Complete. ⎈Happy Helming!⎈
 ```
 
@@ -291,15 +291,18 @@ This can help keep credentials out of source control and out your shell history!
 
 ## Priority Deployments
 
-Kruise can execute batches of deployments in parallel. If you have a set of
-simple deployments in which deployment A does not depend on deployment B in any
-way, you don't need to worry about priorities at all! Just execute kruise with
-the `--concurrent` flag and your deployments will be executed in parallel;
-however, let's say deployment A needs to apply a CustomResource that's defined
-in deployment B. In this case, you would want to specify in the `kruise.yaml`
-that the deployment responsible for creating the CustomResourceDefinition in B
-has a higher priority than the application of that CustomResource in A. This can
-be achieved with the `priority` field, which can be applied to each type of
+Kruise can execute batches of deployments in parallel, at the cost of more
+complexity. If the potential speed up of concurrent execution is not worth the
+complexity, don't use the `--concurrent` flag and Kruise will deploy the options
+passed syncronously, in the order they were given. If you have a set of simple
+deployments in which deployment A does not depend on deployment B in any way,
+you don't need to worry about priorities at all! Just execute kruise with the
+`--concurrent` flag and your deployments will be executed in parallel; however,
+let's say deployment A needs to apply a CustomResource that's defined in
+deployment B. In this case, you would want to specify in the `kruise.yaml` that
+the deployment responsible for creating the CustomResourceDefinition in B has a
+higher priority than the application of that CustomResource in A. This can be
+achieved with the `priority` field, which can be applied to each type of
 installer in Kruise.
 
 Let's revisit the Istio example from earlier:
