@@ -32,6 +32,10 @@
     }
   },
 
+  "mounts": [
+    "source=${localEnv:HOME}/.zsh_history,target=/home/vscode/.zsh_history,type=bind"
+  ],
+
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
 

@@ -39,5 +39,6 @@ func NewDeployFlags() *pflag.FlagSet {
 	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
 	fs.BoolP("concurrent", "c", false, "deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
 	fs.BoolP("init", "i", false, "add Helm repositories and create Kubernetes secrets for the specified options")
+	fs.StringP("profile", "p", "", "deploy a profile")
 	return fs
 }
