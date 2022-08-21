@@ -10,7 +10,10 @@ import (
 func Deploy(fs *pflag.FlagSet, args []string) {
 	init, err := fs.GetBool("init")
 	Fatal(err)
-	d := getValidDeployments(args)
+	profile, err := fs.GetString("profile")
+	Fatal(err)
+	d := getValidDeployments(Kfg.Manifest.Deploy.Profiles[profile].Items)
+	d = append(d, getValidDeployments(args)...)
 	if init {
 		i := getValidInitDeployments(args)
 		Init(fs, i...)
@@ -27,6 +30,16 @@ func GetDeployOptions() Options {
 		opts = append(opts, newOption(append(args, v.Aliases...), v.Description.Deploy))
 	}
 	return opts
+}
+
+// GetDeployProfiles gets deploy profiles from Kruise config
+func GetDeployProfiles() Profiles {
+	p := Kfg.Manifest.Deploy.Profiles
+	var profiles Profiles
+	for k, v := range p {
+		profiles = append(profiles, newProfile(k, v))
+	}
+	return profiles
 }
 
 // Delete determines valid deployments from args and passes the cobra Cmd

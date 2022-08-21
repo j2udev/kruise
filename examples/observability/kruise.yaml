@@ -6,7 +6,6 @@ deploy:
       aliases:
       - telemetry
       description: "deploy an observability stack to the cluster"
-      description: ""
       items:
       - istio
       - jaeger
