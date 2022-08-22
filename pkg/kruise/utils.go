@@ -2,9 +2,6 @@ package kruise
 
 import "os"
 
-// void is a helper type to make building and using sets more readable
-type void struct{}
-
 // contains is used to generically determine whether an object is contained
 // within a slice of other objects
 func contains[T comparable](list []T, t T) bool {

@@ -11,6 +11,16 @@ deploy:
       - jaeger
       - loki
       - prometheus-operator
+    logging:
+      description: "deploy a logging stack to the cluster"
+      items:
+      - istio
+      - loki
+    metrics:
+      description: "deploy a metrics stack to the cluster"
+      items:
+      - istio
+      - prometheus-operator
   deployments:
     istio:
       description:

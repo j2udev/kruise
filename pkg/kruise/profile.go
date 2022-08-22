@@ -24,3 +24,12 @@ func newProfile(name string, prof latest.Profile) Profile {
 		name + ", " + strings.Join(prof.Aliases, ", "),
 	}
 }
+
+// getValidArgs is used to get arguments from a slice of Options
+func (p Profiles) getValidArgs() []string {
+	var valid []string
+	for _, prof := range p {
+		valid = append(valid, strings.Split(prof.Arguments, ", ")...)
+	}
+	return valid
+}

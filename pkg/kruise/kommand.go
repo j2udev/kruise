@@ -314,7 +314,8 @@ Options:{{range .Opts }}
   {{.Arguments}}	{{.Description}}{{end}}{{end}}
 
 Profiles:{{range .Profiles }}
-  {{.Arguments}}	{{.Description}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
+  {{.Arguments}}	{{.Description}}
+    |- Options:	{{range .Items}}{{.}} {{end}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
 
 Flags:
 {{.Cmd.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .Cmd.HasAvailableInheritedFlags}}
