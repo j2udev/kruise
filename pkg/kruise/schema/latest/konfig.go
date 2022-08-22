@@ -20,6 +20,7 @@ type (
 	// DeployConfig represents a map of dynamic Deployments
 	DeployConfig struct {
 		Deployments map[string]Deployment `mapstructure:"deployments"`
+		Profiles    map[string]Profile    `mapstructure:"profiles"`
 	}
 
 	// Deployment represents a flexible means of mapping multiple Helm and
@@ -32,6 +33,13 @@ type (
 		Description DeploymentDesc    `mapstructure:"description"`
 		Helm        HelmDeployment    `mapstructure:"helm"`
 		Kubectl     KubectlDeployment `mapstructure:"kubectl"`
+	}
+
+	// Profile represents a flexible means of bundling together other deployments
+	Profile struct {
+		Aliases     []string       `mapstructure:"aliases"`
+		Items       []string       `mapstructure:"items"`
+		Description DeploymentDesc `mapstructure:"description"`
 	}
 
 	// DeploymentDesc represents the descriptions of the Deployment for the

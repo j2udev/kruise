@@ -14,6 +14,7 @@ func NewDeployKmd() kruise.Kommand {
 		WithValidArgs(kruise.GetValidDeployArgs()).
 		WithShortDescription("Deploy the specified options to your Kubernetes cluster").
 		WithOptions(NewDeployOptions()).
+		WithProfiles(NewDeployProfiles()).
 		WithRunFunc(NewDeployFunc).
 		WithFlags(NewDeployFlags()).
 		Build()
@@ -27,8 +28,15 @@ func NewDeployFunc(cmd *cobra.Command, args []string) {
 // NewDeployOptions creates options for the Kruise deploy command
 //
 // Options are dynamically populated from `deploy` config in the kruise manifest
-func NewDeployOptions() []kruise.Option {
+func NewDeployOptions() kruise.Options {
 	return kruise.GetDeployOptions()
+}
+
+// NewDeployProfiles creates profiles for the Kruise deploy command
+//
+// Profiles  are dynamically populated from `deploy` config in the kruise manifest
+func NewDeployProfiles() kruise.Profiles {
+	return kruise.GetDeployProfiles()
 }
 
 // NewDeployFlags creates flags for the Kruise deploy command

@@ -14,8 +14,9 @@ type (
 	//
 	// cobra Command: https://pkg.go.dev/github.com/spf13/cobra#Command
 	Kommand struct {
-		Cmd  *cobra.Command
-		Opts *[]Option
+		Cmd      *cobra.Command
+		Opts     *Options
+		Profiles *Profiles
 	}
 
 	// KommandBuilder is used to build a Kruise Kommand
@@ -29,7 +30,8 @@ type (
 		WithShortDescription(d string) IKommandBuilder
 		WithLongDescription(d string) IKommandBuilder
 		WithExample(e string) IKommandBuilder
-		WithOptions(o []Option) IKommandBuilder
+		WithOptions(o Options) IKommandBuilder
+		WithProfiles(p Profiles) IKommandBuilder
 		WithSubKommands(k ...Kommand) IKommandBuilder
 		WithFlags(f *pflag.FlagSet) IKommandBuilder
 		WithPersistentFlags(f *pflag.FlagSet) IKommandBuilder
@@ -123,8 +125,15 @@ func (b *KommandBuilder) WithSubKommands(kmds ...Kommand) IKommandBuilder {
 }
 
 // WithOptions sets the Options for the Kruise Kommand
-func (b *KommandBuilder) WithOptions(opts []Option) IKommandBuilder {
+func (b *KommandBuilder) WithOptions(opts Options) IKommandBuilder {
 	b.Opts = &opts
+	b.WithKruiseTemplate()
+	return b
+}
+
+// WithProfiles sets the Profiles for the Kruise Kommand
+func (b *KommandBuilder) WithProfiles(profs Profiles) IKommandBuilder {
+	b.Profiles = &profs
 	b.WithKruiseTemplate()
 	return b
 }
@@ -257,8 +266,9 @@ func (b *KommandBuilder) Deprecated(deprecated string) IKommandBuilder {
 // Build returns a Kommand from a KommandBuilder
 func (b *KommandBuilder) Build() Kommand {
 	return Kommand{
-		Cmd:  b.Cmd,
-		Opts: b.Opts,
+		Cmd:      b.Cmd,
+		Opts:     b.Opts,
+		Profiles: b.Profiles,
 	}
 }
 
@@ -298,10 +308,14 @@ Aliases:
   {{.Cmd.NameAndAliases}}{{end}}{{if .Cmd.HasExample}}
 
 Examples:
-{{.Cmd.Example}}{{end}}
+{{.Cmd.Example}}{{end}}{{if .HasOptions}}
 
-Available Options:{{range .Opts }}
-  {{.Arguments}}	{{.Description}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
+Options:{{range .Opts }}
+  {{.Args}}	{{.Desc}}{{end}}{{end}}
+
+Profiles:{{range .Profiles }}
+  {{.Args}}	{{.Desc}}
+    |- Options:	{{range .Items}}{{.}} {{end}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
 
 Flags:
 {{.Cmd.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .Cmd.HasAvailableInheritedFlags}}
@@ -314,6 +328,22 @@ Additional help topics:{{range .Cmd.Commands}}{{if .Cmd.IsAdditionalHelpTopicCom
 
 Use "{{.Cmd.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
+}
+
+// HasOptions is used to determine if the Kommand has options
+func (k Kommand) HasOptions() bool {
+	if k.Opts == nil || len(*k.Opts) == 0 {
+		return false
+	}
+	return true
+}
+
+// HasProfiles is used to determine if the Kommand has profiles
+func (k Kommand) HasProfiles() bool {
+	if k.Profiles == nil || len(*k.Profiles) == 0 {
+		return false
+	}
+	return true
 }
 
 // Execute is used to execute the underlying cobra Command
