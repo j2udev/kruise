@@ -10,7 +10,8 @@ type (
 	// Profile represents the arguments and description for a CLI profile
 	Profile struct {
 		latest.Profile
-		Arguments string
+		Args string
+		Desc string
 	}
 	//Profiles represents a slice of Profile objects
 	Profiles []Profile
@@ -22,6 +23,7 @@ func newProfile(name string, prof latest.Profile) Profile {
 	return Profile{
 		prof,
 		name + ", " + strings.Join(prof.Aliases, ", "),
+		prof.Description.Deploy,
 	}
 }
 
@@ -29,7 +31,7 @@ func newProfile(name string, prof latest.Profile) Profile {
 func (p Profiles) getValidArgs() []string {
 	var valid []string
 	for _, prof := range p {
-		valid = append(valid, strings.Split(prof.Arguments, ", ")...)
+		valid = append(valid, strings.Split(prof.Args, ", ")...)
 	}
 	return valid
 }

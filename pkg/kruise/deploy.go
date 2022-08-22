@@ -65,6 +65,17 @@ func GetDeleteOptions() Options {
 	return opts
 }
 
+// GetDeleteProfiles gets deploy profiles from Kruise config
+func GetDeleteProfiles() Profiles {
+	var profs Profiles
+	for k, v := range Kfg.Manifest.Deploy.Profiles {
+		p := newProfile(k, v)
+		p.Desc = p.Description.Delete
+		profs = append(profs, p)
+	}
+	return profs
+}
+
 // GetValidDeployArgs aggregates valid deploy arguments from all deployers
 func GetValidDeployArgs() []string {
 	args := GetDeployOptions().getValidArgs()

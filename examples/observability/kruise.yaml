@@ -5,19 +5,25 @@ deploy:
     observability:
       aliases:
       - telemetry
-      description: "deploy an observability stack to the cluster"
+      description:
+        deploy: "deploy an observability stack to the cluster"
+        delete: "delete an observability stack from the cluster"
       items:
       - istio
       - jaeger
       - loki
       - prometheus-operator
     logging:
-      description: "deploy a logging stack to the cluster"
+      description:
+        deploy: "deploy a logging stack to the cluster"
+        delete: "delete a logging stack from the cluster"
       items:
       - istio
       - loki
     metrics:
-      description: "deploy a metrics stack to the cluster"
+      description:
+        deploy: "deploy a metrics stack to the cluster"
+        delete: "delete a metrics stack from the cluster"
       items:
       - istio
       - prometheus-operator

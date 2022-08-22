@@ -14,6 +14,7 @@ func NewDeleteKmd() kruise.Kommand {
 		WithValidArgs(kruise.GetValidDeployArgs()).
 		WithShortDescription("Delete the specified options from your Kubernetes cluster").
 		WithOptions(NewDeleteOptions()).
+		WithProfiles(NewDeleteProfiles()).
 		WithRunFunc(NewDeleteFunc).
 		WithFlags(NewDeleteFlags()).
 		Build()
@@ -29,6 +30,13 @@ func NewDeleteFunc(cmd *cobra.Command, args []string) {
 // Options are dynamically populated from `delete` config in the kruise manifest
 func NewDeleteOptions() []kruise.Option {
 	return kruise.GetDeleteOptions()
+}
+
+// NewDeleteProfiles creates profiles for the Kruise deploy command
+//
+// Profiles  are dynamically populated from `deploy` config in the kruise manifest
+func NewDeleteProfiles() kruise.Profiles {
+	return kruise.GetDeleteProfiles()
 }
 
 // NewDeleteFlags creates flags for the Kruise delete command

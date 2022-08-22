@@ -311,10 +311,10 @@ Examples:
 {{.Cmd.Example}}{{end}}{{if .HasOptions}}
 
 Options:{{range .Opts }}
-  {{.Arguments}}	{{.Description}}{{end}}{{end}}
+  {{.Args}}	{{.Desc}}{{end}}{{end}}
 
 Profiles:{{range .Profiles }}
-  {{.Arguments}}	{{.Description}}
+  {{.Args}}	{{.Desc}}
     |- Options:	{{range .Items}}{{.}} {{end}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
 
 Flags:

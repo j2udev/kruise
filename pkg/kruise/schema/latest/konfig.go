@@ -37,9 +37,9 @@ type (
 
 	// Profile represents a flexible means of bundling together other deployments
 	Profile struct {
-		Aliases     []string `mapstructure:"aliases"`
-		Items       []string `mapstructure:"items"`
-		Description string   `mapstructure:"description"`
+		Aliases     []string       `mapstructure:"aliases"`
+		Items       []string       `mapstructure:"items"`
+		Description DeploymentDesc `mapstructure:"description"`
 	}
 
 	// DeploymentDesc represents the descriptions of the Deployment for the
