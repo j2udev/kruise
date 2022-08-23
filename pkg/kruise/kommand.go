@@ -301,7 +301,7 @@ func (k Kommand) HelpFunc() func(*cobra.Command, []string) {
 // options and other CLI parameters specific to Kruise
 func (k Kommand) UsageTemplate() string {
 	return `Usage:{{if .Cmd.Runnable}}
-  {{.Cmd.UseLine}}{{end}} [options]{{if .Cmd.HasAvailableSubCommands}}
+  {{.Cmd.UseLine}}{{end}} [options]|[profiles]{{if .Cmd.HasAvailableSubCommands}}
   {{.Cmd.CommandPath}} [command]{{end}}{{if gt (len .Cmd.Aliases) 0}}
 
 Aliases:
@@ -315,7 +315,7 @@ Options:{{range .Opts }}
 
 Profiles:{{range .Profiles }}
   {{.Args}}	{{.Desc}}
-    |- Options:	{{range .Items}}{{.}} {{end}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
+    └── Options:	{{range .Items}}{{.}} {{end}}{{end}}{{if .Cmd.HasAvailableLocalFlags}}
 
 Flags:
 {{.Cmd.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .Cmd.HasAvailableInheritedFlags}}
