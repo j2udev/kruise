@@ -69,7 +69,7 @@ Get Go 1.18+, copy an example from the [examples](examples) folder as a starting
 point, and start tinkering with Kruise right away!
 
 ```bash
-cp -r examples/observability /somewhere/else
+cp -r examples/observability /somewhere/else/observability
 cd /somewhere/else/observability
 kruise deploy --help
 ```
@@ -81,10 +81,11 @@ generics so you'll need at least Go 1.18.
 
 [For your convenience](https://go.dev/dl/)
 
-Once you've got at least Go 1.18 installed:
+Once you've got at least Go 1.18 installed,
+`go build -o /somewhere/on/your/PATH/kruise`:
 
 ```zsh
-go build -o /somewhere/on/your/PATH/kruise
+go build -o /usr/local/bin/kruise
 ```
 
 ## Abstract Deployments
@@ -168,7 +169,7 @@ Usage:
 Aliases:
   deploy, dep
 
-Available Options:
+Options:
   istio   deploy Istio to your k8s cluster
 
 Flags:
@@ -250,7 +251,7 @@ deploy:
 
 ```txt
 ╰─❯ kruise deploy cd1 -i
-Using config file: /path/to/kruise.yaml
+Using config file: /workspaces/kruise/examples/custom/kruise.yaml
 Please enter your username for the private-registry.com container registry: foo
 Please enter your password for the private-registry.com container registry: ***
 ✔ Please confirm your password: █
@@ -260,7 +261,7 @@ Please enter your password for the private-registry.com container registry: ***
 
 ```txt
 ╰─❯ kruise deploy cd1 -i
-Using config file: /Users/wardjl/DEC/temp/custom/kruise.yaml
+Using config file: /workspaces/kruise/examples/custom/kruise.yaml
 Please enter your username for the private-registry.com container registry: foo
 Please enter your password for the private-registry.com container registry: ***
 Please confirm your password: ***
@@ -274,7 +275,7 @@ Please enter your password for the private Helm repository: ***
 
 ```txt
 ╰─❯ kruise deploy cd1 -i
-Using config file: /Users/wardjl/DEC/temp/custom/kruise.yaml
+Using config file: /workspaces/kruise/examples/custom/kruise.yaml
 Please enter your username for the private-registry.com container registry: foo
 Please enter your password for the private-registry.com container registry: ***
 Please confirm your password: ***
@@ -431,3 +432,110 @@ To explain that just because you _can_ deploy things concurrently doesn't mean
 you have to or even should. It introduces extra complexity and should be used
 with caution. It will serve you better when deploying larger tech stacks in
 which you are familiar with the interdepencies of the stack.
+
+## Deployment Profiles
+
+Kruise supports deployment profiles, which are essentially just bundles of other
+generic deployments. The
+[observability example](./examples/observability/kruise.yaml) defines multiple
+example profiles as can be seen below (the deployments have been replaced with
+`...` for readability):
+
+```yaml
+apiVersion: v1alpha1
+kind: Config
+deploy:
+    profiles:
+        observability:
+            aliases:
+                - telemetry
+            description:
+                deploy: "deploy an observability stack to the cluster"
+                delete: "delete an observability stack from the cluster"
+            items:
+                - istio
+                - jaeger
+                - loki
+                - prometheus-operator
+        logging:
+            description:
+                deploy: "deploy a logging stack to the cluster"
+                delete: "delete a logging stack from the cluster"
+            items:
+                - istio
+                - loki
+        metrics:
+            description:
+                deploy: "deploy a metrics stack to the cluster"
+                delete: "delete a metrics stack from the cluster"
+            items:
+                - istio
+                - prometheus-operator
+    deployments:
+        istio: ...
+        jaeger: ...
+        loki: ...
+        prometheus-operator: ...
+```
+
+Each profile object has an `items` parameter. Each item in that list represents
+a key in the `deployments` map.
+
+The help text for the above example is shown below:
+
+```txt
+╰─❯ kruise deploy -h
+Using config file: /workspaces/kruise/examples/observability/kruise.yaml
+Usage:
+  kruise deploy [flags] [options]|[profiles]
+
+Aliases:
+  deploy, dep
+
+Options:
+  prometheus-operator, prom-op   deploy Prometheus Operator to your k8s cluster
+  istio                          deploy Istio to your k8s cluster
+  jaeger                         deploy Jaeger to your k8s cluster
+  loki                           deploy Loki to your k8s cluster
+
+Profiles:
+  metrics,                   deploy a metrics stack to the cluster
+    └── Options:             istio prometheus-operator
+  logging,                   deploy a logging stack to the cluster
+    └── Options:             istio loki
+  observability, telemetry   deploy an observability stack to the cluster
+    └── Options:             istio jaeger loki prometheus-operator
+
+Flags:
+  -c, --concurrent        deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)
+  -h, --help              help for deploy
+  -i, --init              add Helm repositories and create Kubernetes secrets for the specified options
+  -d, --shallow-dry-run   output the command being performed under the hood
+
+Global Flags:
+  -V, --verbosity string   specify the log level to be used (trace, debug, info, warn, error) (default "error")
+```
+
+and the output of a dry-run for the `observability` profile is shown below:
+
+```txt
+╰─❯ kruise deploy -d observability
+Using config file: /workspaces/kruise/examples/observability/kruise.yaml
+/usr/local/bin/helm upgrade --install istio-base istio/base --namespace istio-system --version 1.14.1 -f values/istio-base-values.yaml --create-namespace
+/usr/local/bin/helm upgrade --install istiod istio/istiod --namespace istio-system --version 1.14.1 -f values/istiod-values.yaml --create-namespace
+/usr/local/bin/helm upgrade --install istio-ingressgateway istio/gateway --namespace istio-system --version 1.14.1 -f values/istio-gateway-values.yaml --set service.externalIPs[0]=CHANGE_ME --create-namespace
+/usr/local/bin/kubectl create namespace istio-system
+/usr/local/bin/kubectl apply --namespace istio-system -f manifests/istio-gateway.yaml
+/usr/local/bin/helm upgrade --install jaeger jaegertracing/jaeger --namespace tracing --version 0.57.1 -f values/jaeger-values.yaml --create-namespace
+/usr/local/bin/kubectl create namespace tracing
+/usr/local/bin/kubectl apply --namespace tracing -f manifests/jaeger-virtual-service.yaml
+/usr/local/bin/helm upgrade --install loki grafana/loki-stack --namespace logging --version 2.6.5 --create-namespace
+/usr/local/bin/helm upgrade --install prometheus-operator prometheus-community/kube-prometheus-stack --namespace monitoring --version 36.0.2 -f values/prometheus-operator-values.yaml --create-namespace
+/usr/local/bin/kubectl create namespace monitoring
+/usr/local/bin/kubectl apply --namespace monitoring -f manifests/grafana-virtual-service.yaml
+```
+
+When a deployment or profile is passed without the `--concurrent` flag, order is
+preserved. This means that individual deployments will be executed in the order
+that they were given and profiles will execute deployments in the order they
+appear in the respective profile's `items` list.

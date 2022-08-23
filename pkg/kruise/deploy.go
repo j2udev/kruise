@@ -125,29 +125,42 @@ func getValidInitInstallers(args []string) Installers {
 	return installers
 }
 
-// getValidDeployments gets all valid deployments given passed arguments
-func getValidDeployments(args []string) map[string]Deployment {
-	set := make(map[string]Deployment)
-	for _, arg := range args {
-		if prof, ok := argIsProfile(arg); ok {
-			d := getDeploymentsFromProfile(prof)
-			for _, dep := range d {
-				set[dep.name] = dep
+// deduplicateArgs is used to deduplicate the given args
+//
+// It breaks down any profiles into their respective items and does not use a
+// set in order to preserve order
+func deduplicateArgs(args []string) []string {
+	var dedup []string
+	for _, a := range args {
+		if p, ok := argIsProfile(a); ok {
+			if !containsAny(dedup, p.Items...) {
+				dedup = append(dedup, p.Items...)
+			} else {
+				for _, item := range p.Items {
+					if !contains(dedup, item) {
+						dedup = append(dedup, item)
+					}
+				}
 			}
-		} else if dep, ok := argIsDeployment(arg); ok {
-			set[dep.name] = dep
+		} else if dep, ok := argIsDeployment(a); ok {
+			if !contains(dedup, dep.name) {
+				dedup = append(dedup, dep.name)
+			}
 		}
 	}
-	return set
+	return dedup
 }
 
-// getDeploymentsFromProfile is a helper function for getting all Deployments
-// described by a Profile
-func getDeploymentsFromProfile(profile Profile) Deployments {
+// getValidDeployments gets all valid deployments given passed arguments
+// func getValidDeployments(args []string) map[string]Deployment {
+func getValidDeployments(args []string) Deployments {
 	d := Kfg.Manifest.Deploy.Deployments
 	var deps Deployments
-	for _, p := range profile.Items {
-		deps = append(deps, newDeployment(p, d[p]))
+	dedup := deduplicateArgs(args)
+	for _, arg := range dedup {
+		if dep, ok := d[arg]; ok {
+			deps = append(deps, newDeployment(arg, dep))
+		}
 	}
 	return deps
 }
