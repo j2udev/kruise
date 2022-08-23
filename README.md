@@ -185,8 +185,7 @@ Global Flags:
 ## Transparent Abstractions
 
 Abstraction is a double-edged sword. When you know what you're doing it's
-synonymous with efficiency. When you don't, it's theft of a new skillset. In
-either case it can become a crutch.
+synonymous with efficiency. When you don't, it can become a crutch.
 
 As much as possible, Kruise adds `shallow-dry-run` capability to each command
 (this just means the command being performed under the hood is printed to
@@ -537,5 +536,5 @@ Using config file: /workspaces/kruise/examples/observability/kruise.yaml
 
 When a deployment or profile is passed without the `--concurrent` flag, order is
 preserved. This means that individual deployments will be executed in the order
-that they were given and profiles will execute deployments in the order they
-appear in the respective profile's `items` list.
+that they were given and profiles will execute deployments in the order that
+they appear in the `items` list.
