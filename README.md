@@ -493,17 +493,17 @@ Aliases:
 
 Options:
   prometheus-operator, prom-op   deploy Prometheus Operator to your k8s cluster
+  loki                           deploy Loki to your k8s cluster
   istio                          deploy Istio to your k8s cluster
   jaeger                         deploy Jaeger to your k8s cluster
-  loki                           deploy Loki to your k8s cluster
 
 Profiles:
   metrics,                   deploy a metrics stack to the cluster
-    └── Options:             istio prometheus-operator
+    ↳ Options:               istio prometheus-operator
   logging,                   deploy a logging stack to the cluster
-    └── Options:             istio loki
+    ↳ Options:               istio loki
   observability, telemetry   deploy an observability stack to the cluster
-    └── Options:             istio jaeger loki prometheus-operator
+    ↳ Options:               istio jaeger loki prometheus-operator
 
 Flags:
   -c, --concurrent        deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)
@@ -538,3 +538,32 @@ When a deployment or profile is passed without the `--concurrent` flag, order is
 preserved. This means that individual deployments will be executed in the order
 that they were given and profiles will execute deployments in the order that
 they appear in the `items` list.
+
+When the `--concurrent` flag is used (and the `--verbosity` is set at an
+appropriate level), we can see the `observability` deployments executed
+according to their priority.
+
+```txt
+╰─❯ kruise deploy observability -dci --verbosity info
+Using config file: /workspaces/kruise/examples/observability/kruise.yaml
+/usr/local/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+/usr/local/bin/helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
+/usr/local/bin/helm repo add jaegertracing https://jaegertracing.github.io/helm-charts --force-update
+/usr/local/bin/helm repo add grafana https://grafana.github.io/helm-charts --force-update
+/usr/local/bin/helm repo update
+INFO[0000] Priority 1 waitgroup starting
+/usr/local/bin/helm upgrade --install istiod istio/istiod --namespace istio-system --version 1.14.1 -f values/istiod-values.yaml --create-namespace
+/usr/local/bin/helm upgrade --install istio-base istio/base --namespace istio-system --version 1.14.1 -f values/istio-base-values.yaml --create-namespace
+INFO[0000] Priority 2 waitgroup starting
+/usr/local/bin/kubectl create namespace monitoring
+/usr/local/bin/kubectl apply --namespace monitoring -f manifests/grafana-virtual-service.yaml
+/usr/local/bin/kubectl create namespace istio-system
+/usr/local/bin/helm upgrade --install istio-ingressgateway istio/gateway --namespace istio-system --version 1.14.1 -f values/istio-gateway-values.yaml --set service.externalIPs[0]=CHANGE_ME --create-namespace
+/usr/local/bin/kubectl apply --namespace istio-system -f manifests/istio-gateway.yaml
+/usr/local/bin/helm upgrade --install prometheus-operator prometheus-community/kube-prometheus-stack --namespace monitoring --version 36.0.2 -f values/prometheus-operator-values.yaml --create-namespace
+INFO[0000] Priority 3 waitgroup starting
+/usr/local/bin/helm upgrade --install loki grafana/loki-stack --namespace logging --version 2.6.5 --create-namespace
+/usr/local/bin/kubectl create namespace tracing
+/usr/local/bin/kubectl apply --namespace tracing -f manifests/jaeger-virtual-service.yaml
+/usr/local/bin/helm upgrade --install jaeger jaegertracing/jaeger --namespace tracing --version 0.57.1 -f values/jaeger-values.yaml --create-namespace
+```
