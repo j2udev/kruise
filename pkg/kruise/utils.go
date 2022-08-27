@@ -48,13 +48,11 @@ func captureStdout(f func()) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-
 	f()
-
 	w.Close()
 	os.Stdout = old
-
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, err := io.Copy(&buf, r)
+	Error(err)
 	return buf.String()
 }

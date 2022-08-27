@@ -25,7 +25,10 @@ func (s *ObservabilityIntTestSuite) SetupSuite() {
 	Initialize()
 	s.kfg = Kfg
 	s.fs = GetDeployFlags()
-	s.fs.Set("shallow-dry-run", "true")
+	err := s.fs.Set("shallow-dry-run", "true")
+	if err != nil {
+		s.FailNow(err.Error())
+	}
 }
 
 func (s *ObservabilityIntTestSuite) TestIstioDeployment() {
