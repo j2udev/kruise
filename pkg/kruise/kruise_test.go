@@ -32,29 +32,29 @@ func (s *ObservabilityIntTestSuite) SetupSuite() {
 }
 
 func (s *ObservabilityIntTestSuite) TestIstioDeployment() {
-	actual := captureStdout(s.deployIstio)
+	actual := trimDeployStdoutPrefix(s.deployIstio)
 	s.Equal(s.expectedIstio(), actual)
 }
 
 func (s *ObservabilityIntTestSuite) TestJaegerDeployment() {
-	actual := captureStdout(s.deployJaeger)
+	actual := trimDeployStdoutPrefix(s.deployJaeger)
 	s.Equal(s.expectedJaeger(), actual)
 }
 
 func (s *ObservabilityIntTestSuite) TestLokiDeployment() {
-	actual := captureStdout(s.deployLoki)
+	actual := trimDeployStdoutPrefix(s.deployLoki)
 	s.Equal(s.expectedLoki(), actual)
 }
 
 func (s *ObservabilityIntTestSuite) TestPrometheusOperatorDeployment() {
-	actual := captureStdout(s.deployPrometheusOperator)
+	actual := trimDeployStdoutPrefix(s.deployPrometheusOperator)
 	s.Equal(s.expectedPrometheusOperator(), actual)
 }
 
 func (s *ObservabilityIntTestSuite) TestObservabilityProfile() {
-	actual := captureStdout(s.deployObservability)
+	actual := trimDeployStdoutPrefix(s.deployObservability)
 	s.Equal(s.expectedObservability(), actual)
-	actual = captureStdout(s.deployTelemetry)
+	actual = trimDeployStdoutPrefix(s.deployTelemetry)
 	s.Equal(s.expectedObservability(), actual)
 }
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"regexp"
+	"strings"
 )
 
 // contains is used to generically determine whether an object is contained
@@ -55,4 +57,21 @@ func captureStdout(f func()) string {
 	_, err := io.Copy(&buf, r)
 	Error(err)
 	return buf.String()
+}
+
+// trimDeployPrefix is used to trim the absolute path prefix from any
+// underlying commands used by Deploy
+func trimDeployPrefix(actual string) string {
+	actuals := strings.Split(actual, "\n")
+	reg := regexp.MustCompile(`^\/.+(helm|kubectl)`)
+	for i, a := range actuals {
+		actuals[i] = reg.ReplaceAllString(a, "${1}")
+	}
+	return strings.Join(actuals, "\n")
+}
+
+// trimDeployStdoutPrefix is used to trim the absolute path prefix from the
+// stdout of the given function
+func trimDeployStdoutPrefix(f func()) string {
+	return trimDeployPrefix(captureStdout(f))
 }
