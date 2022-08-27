@@ -48,6 +48,15 @@ func GetDeployProfiles() Profiles {
 	return profs
 }
 
+// GetDeployFlags gets the flags to be used with the Deploy command
+func GetDeployFlags() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("deploy", pflag.ContinueOnError)
+	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
+	fs.BoolP("concurrent", "c", false, "deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
+	fs.BoolP("init", "i", false, "add Helm repositories and create Kubernetes secrets for the specified options")
+	return fs
+}
+
 // Delete determines valid deployments from args and passes the cobra Cmd
 // FlagSet to the Uninstall function
 func Delete(fs *pflag.FlagSet, args []string) {
@@ -74,6 +83,14 @@ func GetDeleteProfiles() Profiles {
 		profs = append(profs, p)
 	}
 	return profs
+}
+
+// GetDeleteFlags gets the flags to be used with the Delete command
+func GetDeleteFlags() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("delete", pflag.ContinueOnError)
+	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
+	fs.BoolP("concurrent", "c", false, "delete the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
+	return fs
 }
 
 // GetValidDeployArgs aggregates valid deploy arguments from all deployers

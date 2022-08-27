@@ -1,6 +1,10 @@
 package kruise
 
-import "os"
+import (
+	"bytes"
+	"io"
+	"os"
+)
 
 // contains is used to generically determine whether an object is contained
 // within a slice of other objects
@@ -36,4 +40,21 @@ func exists(path string) bool {
 		return false
 	}
 	return false
+}
+
+// captureStdout is used to captureStdout from another function and return it
+// in a string; this is useful for testing
+func captureStdout(f func()) string {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	f()
+
+	w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	return buf.String()
 }
