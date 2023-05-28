@@ -24,7 +24,7 @@ type Konfig struct {
 //
 // cwd/kruise.yaml
 //
-// xdg.ConfigHome/kruise.yaml
+// xdg.ConfigHome/kruise/kruise.yaml
 //
 // xdg.Home/.kruise.yaml
 func NewKonfig() *Konfig {
