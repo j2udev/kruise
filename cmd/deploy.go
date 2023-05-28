@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/j2udev/boa"
 	"github.com/j2udev/kruise/internal/kruise"
 	"github.com/spf13/cobra"
@@ -29,8 +27,10 @@ func deploy(cmd *cobra.Command, args []string) {
 
 func deployOptions() []boa.Option {
 	var opts []boa.Option
-	for _, o := range kruise.GetDeployOptions() {
-		opts = append(opts, boa.Option{Args: strings.Split(o.Args, ","), Desc: o.Desc})
+	for _, d := range kruise.GetDeployments() {
+		args := []string{d.Name}
+		args = append(args, d.Aliases...)
+		opts = append(opts, boa.Option{Args: args, Desc: d.Description.Deploy})
 	}
 	return opts
 }
@@ -38,7 +38,9 @@ func deployOptions() []boa.Option {
 func deployProfiles() []boa.Profile {
 	var profs []boa.Profile
 	for _, p := range kruise.GetDeployProfiles() {
-		profs = append(profs, boa.Profile{Args: strings.Split(p.Args, ","), Opts: p.Profile.Items, Desc: p.Desc})
+		args := []string{p.Name}
+		args = append(args, p.Aliases...)
+		profs = append(profs, boa.Profile{Args: args, Opts: p.Items, Desc: p.Description.Deploy})
 	}
 	return profs
 }

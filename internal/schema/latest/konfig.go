@@ -1,8 +1,8 @@
 package latest
 
-import "github.com/j2udev/kruise/internal/kruise/schema/version"
+import "github.com/j2udev/kruise/internal/schema/version"
 
-var Version = "v1alpha2"
+var Version = "v1alpha3"
 
 // NewKruiseConfig represents the schema of the Kruise manifest
 func NewKruiseConfig() version.IVersionedConfig {
@@ -19,8 +19,8 @@ type (
 
 	// DeployConfig represents a map of dynamic Deployments
 	DeployConfig struct {
-		Deployments map[string]Deployment `mapstructure:"deployments"`
-		Profiles    map[string]Profile    `mapstructure:"profiles"`
+		Deployments []Deployment `mapstructure:"deployments"`
+		Profiles    []Profile    `mapstructure:"profiles"`
 	}
 
 	// Deployment represents a flexible means of mapping multiple Helm and
@@ -33,12 +33,14 @@ type (
 		Description DeploymentDesc    `mapstructure:"description"`
 		Helm        HelmDeployment    `mapstructure:"helm"`
 		Kubectl     KubectlDeployment `mapstructure:"kubectl"`
+		Name        string            `mapstructure:"name"`
 	}
 
 	// Profile represents a flexible means of bundling together other deployments
 	Profile struct {
 		Aliases     []string       `mapstructure:"aliases"`
 		Items       []string       `mapstructure:"items"`
+		Name        string         `mapstructure:"name"`
 		Description DeploymentDesc `mapstructure:"description"`
 	}
 

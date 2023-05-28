@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/j2udev/boa"
 	"github.com/j2udev/kruise/internal/kruise"
 	"github.com/spf13/cobra"
@@ -28,16 +26,20 @@ func delete(cmd *cobra.Command, args []string) {
 
 func deleteOptions() []boa.Option {
 	var opts []boa.Option
-	for _, o := range kruise.GetDeleteOptions() {
-		opts = append(opts, boa.Option{Args: strings.Split(o.Args, ","), Desc: o.Desc})
+	for _, d := range kruise.GetDeployments() {
+		args := []string{d.Name}
+		args = append(args, d.Aliases...)
+		opts = append(opts, boa.Option{Args: args, Desc: d.Description.Delete})
 	}
 	return opts
 }
 
 func deleteProfiles() []boa.Profile {
 	var profs []boa.Profile
-	for _, p := range kruise.GetDeleteProfiles() {
-		profs = append(profs, boa.Profile{Args: strings.Split(p.Args, ","), Opts: p.Profile.Items, Desc: p.Desc})
+	for _, p := range kruise.GetDeployProfiles() {
+		args := []string{p.Name}
+		args = append(args, p.Aliases...)
+		profs = append(profs, boa.Profile{Args: args, Opts: p.Items, Desc: p.Description.Delete})
 	}
 	return profs
 }

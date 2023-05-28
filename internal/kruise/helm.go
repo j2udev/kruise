@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/j2udev/kruise/internal/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/pflag"
 )
 
@@ -27,7 +27,7 @@ type (
 
 // Install is used to execute a Helm install command
 func (c HelmChart) Install(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkHelm()
@@ -44,7 +44,7 @@ func (c HelmChart) Install(fs *pflag.FlagSet) {
 
 // Uninstall is used to execute a Helm uninstall command
 func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkHelm()
@@ -59,7 +59,7 @@ func (c HelmChart) GetPriority() int {
 
 // Install is used to execute a Helm repo add command
 func (r HelmRepository) Install(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkHelm()
@@ -69,7 +69,7 @@ func (r HelmRepository) Install(fs *pflag.FlagSet) {
 
 // Uninstall is used to execute a Helm repo remove command
 func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkHelm()
@@ -188,7 +188,7 @@ func (c HelmChart) uninstallArgs(fs *pflag.FlagSet) []string {
 
 // installArgs is used to build Helm repo add CLI args given a FlagSet
 func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
-	sdr, err := fs.GetBool("shallow-dry-run")
+	sdr, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if r.Name == "" {
 		log.Fatal("You must specify a Helm repository name")
@@ -235,7 +235,7 @@ func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
 
 // helmRepoUpdate is used to execute a Helm repo update command
 func helmRepoUpdate(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	Warn(helmExecute(d, []string{"repo", "update"}))
 }

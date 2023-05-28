@@ -1,6 +1,6 @@
 package v1alpha1
 
-import "github.com/j2udev/kruise/internal/kruise/schema/version"
+import "github.com/j2udev/kruise/internal/schema/version"
 
 var Version = "v1alpha1"
 

@@ -176,7 +176,7 @@ Flags:
   -c, --concurrent        deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)
   -h, --help              help for deploy
   -i, --init              add Helm repositories and create Kubernetes secrets for the specified options
-  -d, --shallow-dry-run   output the command being performed under the hood
+  -d, --dry-run   output the command being performed under the hood
 
 Global Flags:
   -V, --verbosity string   specify the log level to be used (trace, debug, info, warn, error) (default "error")
@@ -187,7 +187,7 @@ Global Flags:
 Abstraction is a double-edged sword. When you know what you're doing it's
 synonymous with efficiency. When you don't, it can become a crutch.
 
-As much as possible, Kruise adds `shallow-dry-run` capability to each command
+As much as possible, Kruise adds `dry-run` capability to each command
 (this just means the command being performed under the hood is printed to
 stdout).
 
@@ -509,7 +509,7 @@ Flags:
   -c, --concurrent        deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)
   -h, --help              help for deploy
   -i, --init              add Helm repositories and create Kubernetes secrets for the specified options
-  -d, --shallow-dry-run   output the command being performed under the hood
+  -d, --dry-run   output the command being performed under the hood
 
 Global Flags:
   -V, --verbosity string   specify the log level to be used (trace, debug, info, warn, error) (default "error")

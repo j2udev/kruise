@@ -3,7 +3,7 @@ package kruise
 import (
 	"os/exec"
 
-	"github.com/j2udev/kruise/internal/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/pflag"
 )
 
@@ -25,7 +25,7 @@ type (
 
 // Install is used to execute a Kubectl apply command
 func (m KubectlManifest) Install(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
@@ -36,7 +36,7 @@ func (m KubectlManifest) Install(fs *pflag.FlagSet) {
 
 // Uninstall is used to execute a Kubectl delete command
 func (m KubectlManifest) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
@@ -51,7 +51,7 @@ func (m KubectlManifest) GetPriority() int {
 
 // Install is used to execute a Kubectl create secret command
 func (s KubectlSecret) Install(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
@@ -64,7 +64,7 @@ func (s KubectlSecret) Install(fs *pflag.FlagSet) {
 
 // Install is used to execute a Kubectl delete secret command
 func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("shallow-dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
 		checkKubectl()
@@ -148,7 +148,7 @@ func (m KubectlManifest) uninstallArgs(fs *pflag.FlagSet) []string {
 
 // installArgs is used to build Kubectl create secret CLI args given a FlagSet
 func (s KubectlSecret) installArgs(fs *pflag.FlagSet) []string {
-	sdr, err := fs.GetBool("shallow-dry-run")
+	sdr, err := fs.GetBool("dry-run")
 	Fatal(err)
 	args := []string{"create", "secret"}
 	if s.Namespace != "" {

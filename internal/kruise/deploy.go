@@ -1,17 +1,14 @@
 package kruise
 
 import (
-	"github.com/j2udev/kruise/internal/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/pflag"
 )
 
 type (
 	// Deployment is used to capture the map key as the name field from the
 	// latest.Deployment object
-	Deployment struct {
-		name string
-		latest.Deployment
-	}
+	Deployment latest.Deployment
 	// Deployments is a slice of Deployment objects
 	Deployments []Deployment
 )
@@ -29,21 +26,20 @@ func Deploy(fs *pflag.FlagSet, args []string) {
 	Install(fs, d...)
 }
 
-// GetDeployOptions aggregates deploy options from all deployers
-func GetDeployOptions() Options {
-	var opts Options
-	for k, v := range Kfg.Manifest.Deploy.Deployments {
-		args := []string{k}
-		opts = append(opts, newOption(append(args, v.Aliases...), v.Description.Deploy))
+// GetDeployments gets deployments from Kruise config
+func GetDeployments() Deployments {
+	var deps Deployments
+	for _, d := range Kfg.Manifest.Deploy.Deployments {
+		deps = append(deps, newDeployment(d))
 	}
-	return opts
+	return deps
 }
 
 // GetDeployProfiles gets deploy profiles from Kruise config
 func GetDeployProfiles() Profiles {
 	var profs Profiles
-	for k, v := range Kfg.Manifest.Deploy.Profiles {
-		profs = append(profs, newProfile(k, v))
+	for _, p := range Kfg.Manifest.Deploy.Profiles {
+		profs = append(profs, newProfile(p))
 	}
 	return profs
 }
@@ -55,48 +51,12 @@ func Delete(fs *pflag.FlagSet, args []string) {
 	Uninstall(fs, d...)
 }
 
-// GetDeleteOptions aggregates delete options from all deployers
-func GetDeleteOptions() Options {
-	var opts Options
-	for k, v := range Kfg.Manifest.Deploy.Deployments {
-		args := []string{k}
-		opts = append(opts, newOption(append(args, v.Aliases...), v.Description.Delete))
-	}
-	return opts
-}
-
-// GetDeleteProfiles gets deploy profiles from Kruise config
-func GetDeleteProfiles() Profiles {
-	var profs Profiles
-	for k, v := range Kfg.Manifest.Deploy.Profiles {
-		p := newProfile(k, v)
-		p.Desc = p.Description.Delete
-		profs = append(profs, p)
-	}
-	return profs
-}
-
-// GetDeleteFlags gets the flags to be used with the Delete command
-func GetDeleteFlags() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("delete", pflag.ContinueOnError)
-	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
-	fs.BoolP("concurrent", "c", false, "delete the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
-	return fs
-}
-
-// GetValidDeployArgs aggregates valid deploy arguments from all deployers
-func GetValidDeployArgs() []string {
-	args := GetDeployOptions().getValidArgs()
-	args = append(args, GetDeployProfiles().getValidArgs()...)
-	return args
-}
-
-// newDeployment is a helper function for creating a Deployment object with a name
+// newDeployment is a helper function for creating a Deployment object from schema
 //
 // The name is derived from a map entry in a config file and isn't on the
 // original latest.Deployment object
-func newDeployment(name string, dep latest.Deployment) Deployment {
-	return Deployment{name, dep}
+func newDeployment(dep latest.Deployment) Deployment {
+	return Deployment(dep)
 }
 
 // getValidInstallers gets all valid deployments given passed arguments
@@ -151,8 +111,8 @@ func deduplicateArgs(args []string) []string {
 				}
 			}
 		} else if dep, ok := argIsDeployment(a); ok {
-			if !contains(dedup, dep.name) {
-				dedup = append(dedup, dep.name)
+			if !contains(dedup, dep.Name) {
+				dedup = append(dedup, dep.Name)
 			}
 		}
 	}
@@ -162,12 +122,14 @@ func deduplicateArgs(args []string) []string {
 // getValidDeployments gets all valid deployments given passed arguments
 // func getValidDeployments(args []string) map[string]Deployment {
 func getValidDeployments(args []string) Deployments {
-	d := Kfg.Manifest.Deploy.Deployments
+	deployments := Kfg.Manifest.Deploy.Deployments
 	var deps Deployments
 	dedup := deduplicateArgs(args)
 	for _, arg := range dedup {
-		if dep, ok := d[arg]; ok {
-			deps = append(deps, newDeployment(arg, dep))
+		for _, dep := range deployments {
+			if dep.Name == arg || contains(dep.Aliases, arg) {
+				deps = append(deps, newDeployment(dep))
+			}
 		}
 	}
 	return deps
@@ -175,13 +137,10 @@ func getValidDeployments(args []string) Deployments {
 
 // argIsDeployment is used to determine if the passed argument is a valid deployment
 func argIsDeployment(arg string) (Deployment, bool) {
-	d := Kfg.Manifest.Deploy.Deployments
-	if dep, ok := d[arg]; ok {
-		return newDeployment(arg, dep), true
-	}
-	for k, v := range d {
-		if containsAny(v.Aliases, arg) {
-			return newDeployment(k, v), true
+	deployments := Kfg.Manifest.Deploy.Deployments
+	for _, dep := range deployments {
+		if dep.Name == arg || contains(dep.Aliases, arg) {
+			return newDeployment(dep), true
 		}
 	}
 	return Deployment{}, false
@@ -189,13 +148,10 @@ func argIsDeployment(arg string) (Deployment, bool) {
 
 // argIsProfile is used to determine if the passed argument is a valid profile
 func argIsProfile(arg string) (Profile, bool) {
-	p := Kfg.Manifest.Deploy.Profiles
-	if prof, ok := p[arg]; ok {
-		return newProfile(arg, prof), true
-	}
-	for k, v := range p {
-		if containsAny(v.Aliases, arg) {
-			return newProfile(k, v), true
+	profiles := Kfg.Manifest.Deploy.Profiles
+	for _, prof := range profiles {
+		if prof.Name == arg || contains(prof.Aliases, arg) {
+			return newProfile(prof), true
 		}
 	}
 	return Profile{}, false

@@ -1,13 +1,12 @@
 package kruise
 
-import "strings"
+import (
+	"github.com/j2udev/boa"
+)
 
 type (
 	// Option represents the arguments and description for a CLI option
-	Option struct {
-		Args string
-		Desc string
-	}
+	Option boa.Option
 	//Options represents a slice of Option objects
 	Options []Option
 )
@@ -16,16 +15,7 @@ type (
 // slice of arguments and a description
 func newOption(args []string, desc string) Option {
 	return Option{
-		Args: strings.Join(args, ", "),
+		Args: args,
 		Desc: desc,
 	}
-}
-
-// getValidArgs is used to get arguments from a slice of Options
-func (o Options) getValidArgs() []string {
-	var valid []string
-	for _, opt := range o {
-		valid = append(valid, strings.Split(opt.Args, ", ")...)
-	}
-	return valid
 }
