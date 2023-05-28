@@ -8,13 +8,13 @@ import (
 
 func NewDeleteCmd() *cobra.Command {
 	return boa.NewCmd("delete").
-		WithValidOptions(deployOptions()...).
-		WithValidProfiles(deployProfiles()...).
+		WithValidOptions(deleteOptions()...).
+		WithValidProfiles(deleteProfiles()...).
 		WithOptionsTemplate().
 		WithMinValidArgs(1).
 		WithAliases([]string{"del"}).
 		WithShortDescription("Delete the specified options from your Kubernetes cluster").
-		WithRunFunc(deploy).
+		WithRunFunc(delete).
 		WithBoolPFlag("dry-run", "d", false, "output the command being performed under the hood").
 		WithBoolPFlag("concurrent", "c", false, "delete the arguments concurrently (deletes in order based on the 'priority' of each deployment passed)").
 		Build()
