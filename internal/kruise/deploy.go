@@ -1,7 +1,7 @@
 package kruise
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/kruise/schema/latest"
 	"github.com/spf13/pflag"
 )
 
@@ -46,15 +46,6 @@ func GetDeployProfiles() Profiles {
 		profs = append(profs, newProfile(k, v))
 	}
 	return profs
-}
-
-// GetDeployFlags gets the flags to be used with the Deploy command
-func GetDeployFlags() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("deploy", pflag.ContinueOnError)
-	fs.BoolP("shallow-dry-run", "d", false, "output the command being performed under the hood")
-	fs.BoolP("concurrent", "c", false, "deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)")
-	fs.BoolP("init", "i", false, "add Helm repositories and create Kubernetes secrets for the specified options")
-	return fs
 }
 
 // Delete determines valid deployments from args and passes the cobra Cmd

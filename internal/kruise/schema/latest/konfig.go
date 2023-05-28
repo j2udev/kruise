@@ -1,6 +1,6 @@
 package latest
 
-import "github.com/j2udevelopment/kruise/pkg/kruise/schema/version"
+import "github.com/j2udev/kruise/internal/kruise/schema/version"
 
 var Version = "v1alpha2"
 

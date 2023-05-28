@@ -1,47 +1,43 @@
 package cmd
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/kruise"
+	"strings"
+
+	"github.com/j2udev/boa"
+	"github.com/j2udev/kruise/internal/kruise"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
-// NewDeleteKmd creates the Kruise delete command
-func NewDeleteKmd() kruise.Kommand {
-	return kruise.NewKmd("delete").
+func NewDeleteCmd() *cobra.Command {
+	return boa.NewCmd("delete").
+		WithValidOptions(deployOptions()...).
+		WithValidProfiles(deployProfiles()...).
+		WithOptionsTemplate().
+		WithMinValidArgs(1).
 		WithAliases([]string{"del"}).
-		WithArgs(cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs)).
-		WithValidArgs(kruise.GetValidDeployArgs()).
 		WithShortDescription("Delete the specified options from your Kubernetes cluster").
-		WithOptions(NewDeleteOptions()).
-		WithProfiles(NewDeleteProfiles()).
-		WithRunFunc(NewDeleteFunc).
-		WithFlags(NewDeleteFlags()).
+		WithRunFunc(deploy).
+		WithBoolPFlag("dry-run", "d", false, "output the command being performed under the hood").
+		WithBoolPFlag("concurrent", "c", false, "delete the arguments concurrently (deletes in order based on the 'priority' of each deployment passed)").
 		Build()
 }
 
-// NewDeleteFunc is used to define the action performed when the delete command is called
-func NewDeleteFunc(cmd *cobra.Command, args []string) {
+func delete(cmd *cobra.Command, args []string) {
 	kruise.Delete(cmd.Flags(), args)
 }
 
-// NewDeleteOptions creates options for the Kruise delete command
-//
-// Options are dynamically populated from `delete` config in the kruise manifest
-func NewDeleteOptions() []kruise.Option {
-	return kruise.GetDeleteOptions()
+func deleteOptions() []boa.Option {
+	var opts []boa.Option
+	for _, o := range kruise.GetDeleteOptions() {
+		opts = append(opts, boa.Option{Args: strings.Split(o.Args, ","), Desc: o.Desc})
+	}
+	return opts
 }
 
-// NewDeleteProfiles creates profiles for the Kruise deploy command
-//
-// Profiles  are dynamically populated from `deploy` config in the kruise manifest
-func NewDeleteProfiles() kruise.Profiles {
-	return kruise.GetDeleteProfiles()
-}
-
-// NewDeleteFlags creates flags for the Kruise delete command
-//
-// See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
-func NewDeleteFlags() *pflag.FlagSet {
-	return kruise.GetDeleteFlags()
+func deleteProfiles() []boa.Profile {
+	var profs []boa.Profile
+	for _, p := range kruise.GetDeleteProfiles() {
+		profs = append(profs, boa.Profile{Args: strings.Split(p.Args, ","), Opts: p.Profile.Items, Desc: p.Desc})
+	}
+	return profs
 }

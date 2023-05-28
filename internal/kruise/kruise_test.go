@@ -24,8 +24,7 @@ func (s *ObservabilityIntTestSuite) SetupSuite() {
 	os.Setenv("KRUISE_CONFIG", "../../examples/observability/kruise.yaml")
 	Initialize()
 	s.kfg = Kfg
-	s.fs = GetDeployFlags()
-	err := s.fs.Set("shallow-dry-run", "true")
+	err := s.fs.Set("dry-run", "true")
 	if err != nil {
 		s.FailNow(err.Error())
 	}

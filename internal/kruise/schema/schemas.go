@@ -1,9 +1,9 @@
 package schema
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/v1alpha1"
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/version"
+	"github.com/j2udev/kruise/internal/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/kruise/schema/v1alpha1"
+	"github.com/j2udev/kruise/internal/kruise/schema/version"
 	"github.com/thoas/go-funk"
 )
 

@@ -1,8 +1,8 @@
 # Kruise(ctl)
 
-[![Build Status](https://github.com/j2udevelopment/kruise/workflows/build/badge.svg?branch=master)](https://github.com/j2udevelopment/kruise/actions?query=workflow%3Abuild+branch%3Amaster)
-[![GoReportCard](https://goreportcard.com/badge/github.com/j2udevelopment/kruise)](https://goreportcard.com/report/github.com/j2udevelopment/kruise)
-[![Go Reference](https://pkg.go.dev/badge/github.com/j2udevelopment/kruise.svg)](https://pkg.go.dev/github.com/j2udevelopment/kruise)
+[![Build Status](https://github.com/j2udev/kruise/workflows/build/badge.svg?branch=master)](https://github.com/j2udev/kruise/actions?query=workflow%3Abuild+branch%3Amaster)
+[![GoReportCard](https://goreportcard.com/badge/github.com/j2udev/kruise)](https://goreportcard.com/report/github.com/j2udev/kruise)
+[![Go Reference](https://pkg.go.dev/badge/github.com/j2udev/kruise.svg)](https://pkg.go.dev/github.com/j2udev/kruise)
 
 Kruise is a [black box](https://en.wikipedia.org/wiki/Black_box) CLI that's
 meant to simplify the deployment of... things.

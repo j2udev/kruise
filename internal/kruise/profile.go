@@ -3,7 +3,7 @@ package kruise
 import (
 	"strings"
 
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/kruise/schema/latest"
 )
 
 type (
@@ -20,9 +20,12 @@ type (
 // newProfile is a helper function used to create a new Profile object from a
 // slice of arguments and a description
 func newProfile(name string, prof latest.Profile) Profile {
+	var aliases []string
+	aliases = append(aliases, name)
+	aliases = append(aliases, prof.Aliases...)
 	return Profile{
 		prof,
-		name + ", " + strings.Join(prof.Aliases, ", "),
+		strings.Join(aliases, ","),
 		prof.Description.Deploy,
 	}
 }

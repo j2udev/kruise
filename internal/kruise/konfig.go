@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/adrg/xdg"
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/kruise/schema/latest"
 	"github.com/spf13/viper"
 )
 
