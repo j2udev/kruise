@@ -24,11 +24,10 @@ func (s *ObservabilityIntTestSuite) SetupSuite() {
 	os.Setenv("KRUISE_CONFIG", "../../examples/observability/kruise.yaml")
 	Initialize()
 	s.kfg = Kfg
-	s.fs = GetDeployFlags()
-	err := s.fs.Set("shallow-dry-run", "true")
-	if err != nil {
-		s.FailNow(err.Error())
-	}
+	s.fs = pflag.NewFlagSet("test", pflag.ContinueOnError)
+	s.fs.BoolP("concurrent", "c", false, "")
+	s.fs.BoolP("init", "i", false, "")
+	s.fs.BoolP("dry-run", "d", true, "")
 }
 
 func (s *ObservabilityIntTestSuite) TestIstioDeployment() {

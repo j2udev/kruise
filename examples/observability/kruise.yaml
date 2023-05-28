@@ -2,7 +2,7 @@ apiVersion: v1alpha1
 kind: Config
 deploy:
   profiles:
-    observability:
+    - name: observability
       aliases:
       - telemetry
       description:
@@ -13,14 +13,14 @@ deploy:
       - jaeger
       - loki
       - prometheus-operator
-    logging:
+    - name: logging
       description:
         deploy: "deploy a logging stack to the cluster"
         delete: "delete a logging stack from the cluster"
       items:
       - istio
       - loki
-    metrics:
+    - name: metrics
       description:
         deploy: "deploy a metrics stack to the cluster"
         delete: "delete a metrics stack from the cluster"
@@ -28,7 +28,7 @@ deploy:
       - istio
       - prometheus-operator
   deployments:
-    istio:
+    - name: istio
       description:
         deploy: deploy Istio to your k8s cluster
         delete: delete Istio from your k8s cluster
@@ -75,7 +75,7 @@ deploy:
           - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
           installArgs:
           - --create-namespace
-    jaeger:
+    - name: jaeger
       description:
         deploy: deploy Jaeger to your k8s cluster
         delete: delete Jaeger from your k8s cluster
@@ -100,7 +100,7 @@ deploy:
           - values/jaeger-values.yaml
           installArgs:
           - --create-namespace
-    loki:
+    - name: loki
       description:
         deploy: deploy Loki to your k8s cluster
         delete: delete Loki from your k8s cluster
@@ -117,7 +117,7 @@ deploy:
           version: 2.6.5
           installArgs:
           - --create-namespace
-    prometheus-operator:
+    - name: prometheus-operator
       aliases:
       - prom-op
       description:

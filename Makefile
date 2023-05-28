@@ -1,3 +1,5 @@
+path := /usr/local/bin
+
 all: tidy fmt lint vet test install
 
 lint:
@@ -19,6 +21,6 @@ test:
 	go test ./... -v
 
 install:
-	go build -o /usr/local/bin/kruise
+	go build -o $(path)/kruise
 
 .PHONY: test

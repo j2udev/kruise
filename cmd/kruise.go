@@ -1,33 +1,23 @@
 package cmd
 
 import (
-	"github.com/j2udevelopment/kruise/pkg/kruise"
+	"github.com/j2udev/boa"
+	"github.com/j2udev/kruise/internal/kruise"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
-// NewKruiseKmd creates the root Kruise command
-func NewKruiseKmd() kruise.Kommand {
-	return kruise.NewKmd("kruise").
-		WithLongDescription(`Kruise is a configurable CLI. It has a set of core commands whose options are determined by a config file.`).
-		WithSubKommands(
-			NewDeployKmd(),
-			NewDeleteKmd(),
+func NewKruiseCmd() *cobra.Command {
+	return boa.NewCmd("kruise").
+		WithLongDescription("Kruise is a configurable CLI. It has a set of core commands whose options are determined by a config file.").
+		WithSubCommands(
+			NewDeployCmd(),
+			NewDeleteCmd(),
 		).
-		WithPersistentFlags(NewKruisePersistentFlags()).
 		WithPersistentPreRunFunc(persistentPreRun).
-		Version("0.1.0").
+		WithStringPPersistentFlag("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)").
+		WithVersion("0.1.0").
 		Build()
-}
-
-// NewKruisePersistentFlags creates flags for the kruise command
-//
-// See the pflag package for more information: https://pkg.go.dev/github.com/spf13/pflag
-func NewKruisePersistentFlags() *pflag.FlagSet {
-	pfs := pflag.NewFlagSet("kruise", pflag.ContinueOnError)
-	pfs.StringP("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)")
-	return pfs
 }
 
 func persistentPreRun(cmd *cobra.Command, args []string) {

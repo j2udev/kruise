@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/adrg/xdg"
-	"github.com/j2udevelopment/kruise/pkg/kruise/schema/latest"
+	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/viper"
 )
 
@@ -24,7 +24,7 @@ type Konfig struct {
 //
 // cwd/kruise.yaml
 //
-// xdg.ConfigHome/kruise.yaml
+// xdg.ConfigHome/kruise/kruise.yaml
 //
 // xdg.Home/.kruise.yaml
 func NewKonfig() *Konfig {
