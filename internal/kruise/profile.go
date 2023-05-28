@@ -16,13 +16,3 @@ type (
 func newProfile(prof latest.Profile) Profile {
 	return Profile(prof)
 }
-
-// getValidArgs is used to get arguments from a slice of Options
-func (p Profiles) getValidArgs() []string {
-	var valid []string
-	for _, prof := range p {
-		valid = append(valid, prof.Name)
-		valid = append(valid, prof.Aliases...)
-	}
-	return valid
-}
