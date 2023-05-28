@@ -106,53 +106,53 @@ apiVersion: v1alpha1
 kind: Config
 deploy:
     deployments:
-        istio:
-            description:
-                deploy: deploy Istio to your k8s cluster
-                delete: delete Istio from your k8s cluster
-            kubectl:
-                manifests:
-                    - namespace: istio-system
-                      priority: 2
-                      paths:
-                          - manifests/istio-gateway.yaml
-            helm:
-                repositories:
-                    - name: istio
-                      url: https://istio-release.storage.googleapis.com/charts
-                charts:
-                    - priority: 1
-                      chartName: base
-                      releaseName: istio-base
-                      namespace: istio-system
-                      chartPath: istio/base
-                      version: 1.14.1
-                      values:
-                          - values/istio-base-values.yaml
-                      installArgs:
-                          - --create-namespace
-                    - priority: 1
-                      chartName: istiod
-                      releaseName: istiod
-                      namespace: istio-system
-                      chartPath: istio/istiod
-                      version: 1.14.1
-                      values:
-                          - values/istiod-values.yaml
-                      installArgs:
-                          - --create-namespace
-                    - priority: 2
-                      chartName: gateway
-                      releaseName: istio-ingressgateway
-                      namespace: istio-system
-                      chartPath: istio/gateway
-                      version: 1.14.1
-                      values:
-                          - values/istio-gateway-values.yaml
-                      setValues:
-                          - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
-                      installArgs:
-                          - --create-namespace
+        - name: istio
+          description:
+              deploy: deploy Istio to your k8s cluster
+              delete: delete Istio from your k8s cluster
+          kubectl:
+              manifests:
+                  - namespace: istio-system
+                    priority: 2
+                    paths:
+                        - manifests/istio-gateway.yaml
+          helm:
+              repositories:
+                  - name: istio
+                    url: https://istio-release.storage.googleapis.com/charts
+              charts:
+                  - priority: 1
+                    chartName: base
+                    releaseName: istio-base
+                    namespace: istio-system
+                    chartPath: istio/base
+                    version: 1.14.1
+                    values:
+                        - values/istio-base-values.yaml
+                    installArgs:
+                        - --create-namespace
+                  - priority: 1
+                    chartName: istiod
+                    releaseName: istiod
+                    namespace: istio-system
+                    chartPath: istio/istiod
+                    version: 1.14.1
+                    values:
+                        - values/istiod-values.yaml
+                    installArgs:
+                        - --create-namespace
+                  - priority: 2
+                    chartName: gateway
+                    releaseName: istio-ingressgateway
+                    namespace: istio-system
+                    chartPath: istio/gateway
+                    version: 1.14.1
+                    values:
+                        - values/istio-gateway-values.yaml
+                    setValues:
+                        - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
+                    installArgs:
+                        - --create-namespace
 ```
 
 and the front and backend devs just need to know that they have an `istio`
@@ -187,9 +187,8 @@ Global Flags:
 Abstraction is a double-edged sword. When you know what you're doing it's
 synonymous with efficiency. When you don't, it can become a crutch.
 
-As much as possible, Kruise adds `dry-run` capability to each command
-(this just means the command being performed under the hood is printed to
-stdout).
+As much as possible, Kruise adds `dry-run` capability to each command (this just
+means the command being performed under the hood is printed to stdout).
 
 In the previous example, a backend dev is asked by another team how they are
 deploying Istio. Rather than having to tap the devops engineer on the shoulder,
@@ -227,23 +226,23 @@ apiVersion: v1alpha1
 kind: Config
 deploy:
     deployments:
-        custom-deployment1:
-            aliases:
-                - cd1
-            description:
-                deploy: cd1 deploy description
-                delete: cd1 delete description
-            kubectl:
-                secrets:
-                    - type: docker-registry
-                      name: image-pull-secret
-                      namespace: default
-                      registry: private-registry.com
-            helm:
-                repositories:
-                    - name: private
-                      url: https://private.helm.repo
-                      private: true # Setting private to true will prompt the user for credentials when the --init flag is used
+        - name: custom-deployment1
+          aliases:
+              - cd1
+          description:
+              deploy: cd1 deploy description
+              delete: cd1 delete description
+          kubectl:
+              secrets:
+                  - type: docker-registry
+                    name: image-pull-secret
+                    namespace: default
+                    registry: private-registry.com
+    helm:
+        repositories:
+            - name: private
+              url: https://private.helm.repo
+              private: true # Setting private to true will prompt the user for credentials when the --init flag is used
 ```
 
 ...
@@ -308,57 +307,57 @@ installer in Kruise.
 Let's revisit the Istio example from earlier:
 
 ```yaml
-apiVersion: v1alpha1
+apiVersion: v1alpha3
 kind: Config
 deploy:
     deployments:
-        istio:
-            description:
-                deploy: deploy Istio to your k8s cluster
-                delete: delete Istio from your k8s cluster
-            kubectl:
-                manifests:
-                    - namespace: istio-system
-                      priority: 2
-                      paths:
-                          - manifests/istio-gateway.yaml
-            helm:
-                repositories:
-                    - name: istio
-                      url: https://istio-release.storage.googleapis.com/charts
-                charts:
-                    - priority: 1
-                      chartName: base
-                      releaseName: istio-base
-                      namespace: istio-system
-                      chartPath: istio/base
-                      version: 1.14.1
-                      values:
-                          - values/istio-base-values.yaml
-                      installArgs:
-                          - --create-namespace
-                    - priority: 1
-                      chartName: istiod
-                      releaseName: istiod
-                      namespace: istio-system
-                      chartPath: istio/istiod
-                      version: 1.14.1
-                      values:
-                          - values/istiod-values.yaml
-                      installArgs:
-                          - --create-namespace
-                    - priority: 2
-                      chartName: gateway
-                      releaseName: istio-ingressgateway
-                      namespace: istio-system
-                      chartPath: istio/gateway
-                      version: 1.14.1
-                      values:
-                          - values/istio-gateway-values.yaml
-                      setValues:
-                          - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
-                      installArgs:
-                          - --create-namespace
+        - name: istio
+          description:
+              deploy: deploy Istio to your k8s cluster
+              delete: delete Istio from your k8s cluster
+          kubectl:
+              manifests:
+                  - namespace: istio-system
+                    priority: 2
+                    paths:
+                        - manifests/istio-gateway.yaml
+          helm:
+              repositories:
+                  - name: istio
+                    url: https://istio-release.storage.googleapis.com/charts
+              charts:
+                  - priority: 1
+                    chartName: base
+                    releaseName: istio-base
+                    namespace: istio-system
+                    chartPath: istio/base
+                    version: 1.14.1
+                    values:
+                        - values/istio-base-values.yaml
+                    installArgs:
+                        - --create-namespace
+                  - priority: 1
+                    chartName: istiod
+                    releaseName: istiod
+                    namespace: istio-system
+                    chartPath: istio/istiod
+                    version: 1.14.1
+                    values:
+                        - values/istiod-values.yaml
+                    installArgs:
+                        - --create-namespace
+                  - priority: 2
+                    chartName: gateway
+                    releaseName: istio-ingressgateway
+                    namespace: istio-system
+                    chartPath: istio/gateway
+                    version: 1.14.1
+                    values:
+                        - values/istio-gateway-values.yaml
+                    setValues:
+                        - service.externalIPs[0]=CHANGE_ME # Set this to your node InternalIP (minikube ip, or describe your node if you're not using minikube)
+                    installArgs:
+                        - --create-namespace
 ```
 
 in this example, you can see that the `istio-ingressgateway` is prioritized
@@ -445,36 +444,36 @@ apiVersion: v1alpha1
 kind: Config
 deploy:
     profiles:
-        observability:
-            aliases:
-                - telemetry
-            description:
-                deploy: "deploy an observability stack to the cluster"
-                delete: "delete an observability stack from the cluster"
-            items:
-                - istio
-                - jaeger
-                - loki
-                - prometheus-operator
-        logging:
-            description:
-                deploy: "deploy a logging stack to the cluster"
-                delete: "delete a logging stack from the cluster"
-            items:
-                - istio
-                - loki
-        metrics:
-            description:
-                deploy: "deploy a metrics stack to the cluster"
-                delete: "delete a metrics stack from the cluster"
-            items:
-                - istio
-                - prometheus-operator
+        - name: observability
+          aliases:
+              - telemetry
+          description:
+              deploy: "deploy an observability stack to the cluster"
+              delete: "delete an observability stack from the cluster"
+          items:
+              - istio
+              - jaeger
+              - loki
+              - prometheus-operator
+        - name: logging
+          description:
+              deploy: "deploy a logging stack to the cluster"
+              delete: "delete a logging stack from the cluster"
+          items:
+              - istio
+              - loki
+        - name: metrics
+          description:
+              deploy: "deploy a metrics stack to the cluster"
+              delete: "delete a metrics stack from the cluster"
+          items:
+              - istio
+              - prometheus-operator
     deployments:
-        istio: ...
-        jaeger: ...
-        loki: ...
-        prometheus-operator: ...
+        - name: istio ...
+        - name: jaeger ...
+        - name: loki ...
+        - name: prometheus-operator ...
 ```
 
 Each profile object has an `items` parameter. Each item in that list represents

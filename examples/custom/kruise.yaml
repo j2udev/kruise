@@ -1,9 +1,9 @@
-apiVersion: v1alpha1
+apiVersion: v1alpha3
 kind: Config
 deploy:
   deployments:
     # This is just an example to demonstrate custom deployments
-    custom-deployment1:
+    - name: custom-deployment1
       aliases:
       - cd1
       description:
@@ -44,7 +44,7 @@ deploy:
           - --wait
           uninstallArgs:
           - --dry-run
-    cert-manager:
+    - name: cert-manager
       aliases:
       - cm
       description:
