@@ -1,21 +1,5 @@
 package kruise
 
-// Trace is used to catch non-nil errors and Log them at a trace level
-func Trace(err error) {
-	if err != nil {
-		Logger.Trace(err)
-	}
-}
-
-// Tracef is used to catch non-nil errors and Log them at a trace level with a
-// custom message
-func Tracef(err error, msg string, args ...interface{}) {
-	if err != nil {
-		Logger.Tracef(msg, args...)
-		Logger.Trace(err)
-	}
-}
-
 // Debug is used to catch non-nil errors and Log them at a debug level
 func Debug(err error) {
 	if err != nil {
@@ -97,25 +81,5 @@ func Fatalf(err error, msg string, args ...interface{}) {
 	if err != nil {
 		Logger.Errorf(msg, args...)
 		Logger.Fatal(err)
-	}
-}
-
-// Panic is used to catch non-nil errors and Log them at a panic level
-//
-// This causes execution to panic when called
-func Panic(err error) {
-	if err != nil {
-		Logger.Panic(err)
-	}
-}
-
-// Panicf is used to catch non-nil errors and Log them at a panic level with a
-// custom message
-//
-// This causes execution to panic when called
-func Panicf(err error, msg string, args ...interface{}) {
-	if err != nil {
-		Logger.Errorf(msg, args...)
-		Logger.Panic(err)
 	}
 }

@@ -1,10 +1,10 @@
 package kruise
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/adrg/xdg"
+	"github.com/charmbracelet/log"
 	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/viper"
 )
@@ -48,7 +48,6 @@ func (k *Konfig) ApplyUserConfig() {
 	k.setUserConfig()
 	Logger.Debug("Unmarshalling user config")
 	k.unmarshalExactConfig()
-	Logger.Trace("Config unmarshalled")
 }
 
 func (k Konfig) setUserConfig() {
@@ -71,9 +70,7 @@ func (k Konfig) setUserConfig() {
 }
 
 func (k Konfig) readConfig() {
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
-	} else {
+	if err := viper.ReadInConfig(); err != nil {
 		if k.Override != "" {
 			Logger.Warnf("No user supplied config found in: %v", k.Override)
 		} else {
@@ -86,5 +83,21 @@ func (k *Konfig) unmarshalExactConfig() {
 	if err := viper.UnmarshalExact(&k.Manifest); err != nil {
 		Fatalf(err, "Unable to decode config into struct")
 	}
+	lvl := k.Manifest.LogLevel
+	if lvl != "" {
+		switch lvl {
+		case "debug":
+			Logger.SetLevel(log.DebugLevel)
+		case "info":
+			Logger.SetLevel(log.InfoLevel)
+		case "warn":
+			Logger.SetLevel(log.WarnLevel)
+		case "error":
+			Logger.SetLevel(log.ErrorLevel)
+		default:
+			Logger.Fatalf("Invalid verbosity level: %s", lvl)
+		}
+	}
+	Logger.Infof("Using config file: %s", viper.ConfigFileUsed())
 	Logger.Debug("Config successfully unmarshalled!")
 }

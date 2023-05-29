@@ -14,6 +14,7 @@ type (
 	KruiseConfig struct {
 		APIVersion string       `mapstructure:"apiVersion"`
 		Kind       string       `mapstructure:"kind"`
+		LogLevel   string       `mapstructure:"logLevel"`
 		Deploy     DeployConfig `mapstructure:"deploy"`
 	}
 

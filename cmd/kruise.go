@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"github.com/charmbracelet/log"
 	"github.com/j2udev/boa"
 	"github.com/j2udev/kruise/internal/kruise"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ func NewKruiseCmd() *cobra.Command {
 			NewDeleteCmd(),
 		).
 		WithPersistentPreRunFunc(persistentPreRun).
-		WithStringPPersistentFlag("verbosity", "V", "error", "specify the log level to be used (trace, debug, info, warn, error)").
+		WithStringPPersistentFlag("verbosity", "V", kruise.Logger.GetLevel().String(), "specify the log level to be used (debug, info, warn, error)").
 		WithVersion("0.1.0").
 		Build()
 }
@@ -29,16 +29,14 @@ func setLogLevel(cmd *cobra.Command) {
 	lvl, err := cmd.Flags().GetString("verbosity")
 	kruise.Error(err)
 	switch lvl {
-	case "trace":
-		kruise.Logger.SetLevel(logrus.TraceLevel)
 	case "debug":
-		logger.SetLevel(logrus.DebugLevel)
+		logger.SetLevel(log.DebugLevel)
 	case "info":
-		logger.SetLevel(logrus.InfoLevel)
+		logger.SetLevel(log.InfoLevel)
 	case "warn":
-		kruise.Logger.SetLevel(logrus.WarnLevel)
+		logger.SetLevel(log.WarnLevel)
 	case "error":
-		logger.SetLevel(logrus.ErrorLevel)
+		logger.SetLevel(log.ErrorLevel)
 	default:
 		logger.Fatalf("Invalid verbosity level: %s", lvl)
 	}
