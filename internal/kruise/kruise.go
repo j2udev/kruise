@@ -5,36 +5,38 @@ package kruise
 
 import (
 	"os"
+	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/charmbracelet/log"
 )
 
 var (
 	// Kfg is a global config object for Kruise into which config is unmarshalled
 	Kfg *Konfig
-	// Logger is the global Logrus logger used by Kruise
-	//
-	// Read more about Logrus: https://pkg.go.dev/github.com/sirupsen/logrus
-	Logger *logrus.Logger
+	// Logger is the global logger used by Kruise
+	Logger *log.Logger
 )
 
 // Initialize is used to initialize Kruise
 func Initialize() {
 	InitializeLogger()
 	InitializeConfig()
-	Logger.Trace("Kruise initialized")
+	Logger.Debug("Kruise initialized")
 }
 
 // InitializeConfig is used to initialize Kruise configuration
 func InitializeConfig() {
 	Kfg = NewKonfig()
-	Logger.Trace("Config initialized")
+	Logger.Debug("Config initialized")
 }
 
 // InitializeLogger is used to initialize the Kruise logger
 func InitializeLogger() {
-	logger := logrus.New()
-	logger.Out = os.Stdout
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		ReportCaller:    true,
+		ReportTimestamp: true,
+		TimeFormat:      time.Kitchen,
+	})
 	Logger = logger
-	Logger.Trace("Logger initialized")
+	Logger.SetLevel(log.WarnLevel)
 }

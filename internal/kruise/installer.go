@@ -104,7 +104,7 @@ func installc(fs *pflag.FlagSet, installers ...Installer) {
 		wg.Wait()
 		Logger.Debugf("Priority %d waitgroup stopping", k)
 	}
-	Logger.Trace("Finished running concurrently")
+	Logger.Debug("Finished running concurrently")
 }
 
 // installp is used to invoke the install function of a given Installer and
@@ -148,7 +148,7 @@ func uninstallc(fs *pflag.FlagSet, installers ...Installer) {
 		wg.Wait()
 		Logger.Debugf("Priority %d waitgroup stopping", k)
 	}
-	Logger.Trace("Finished running concurrently")
+	Logger.Debug("Finished running concurrently")
 }
 
 // uninstallp is used to invoke the uninstall function of a given Installer and
