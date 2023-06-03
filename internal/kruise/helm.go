@@ -1,7 +1,6 @@
 package kruise
 
 import (
-	"log"
 	"os/exec"
 	"strings"
 
@@ -135,17 +134,20 @@ func (d HelmDeployment) getHelmCharts() HelmCharts {
 
 // installArgs is used to build Helm install CLI args given a FlagSet
 func (c HelmChart) installArgs(fs *pflag.FlagSet) []string {
-	if c.ReleaseName == "" {
-		log.Fatal("You must specify a Helm release name")
+	if c.ChartName == "" {
+		Logger.Fatal("You must specify a Helm chart name")
 	}
-	if c.ChartPath == "" {
-		log.Fatal("You must specify a Helm chart")
+	if c.RepoName == "" {
+		Logger.Fatalf("You must specify a Helm repository for %s", c.ChartName)
+	}
+	if c.ReleaseName == "" {
+		Logger.Fatal("You must specify a Helm release name")
 	}
 	args := []string{
 		"upgrade",
 		"--install",
 		c.ReleaseName,
-		c.ChartPath,
+		c.RepoName + "/" + c.ChartName,
 		"--namespace",
 		c.Namespace,
 	}
@@ -169,7 +171,7 @@ func (c HelmChart) installArgs(fs *pflag.FlagSet) []string {
 // uninstallArgs is used to build Helm uninstall CLI args given a FlagSet
 func (c HelmChart) uninstallArgs(fs *pflag.FlagSet) []string {
 	if c.ReleaseName == "" {
-		log.Fatal("You must specify a Helm release name")
+		Logger.Fatal("You must specify a Helm release name")
 	}
 	if c.Namespace == "" {
 		c.Namespace = "default"
@@ -191,10 +193,10 @@ func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
 	sdr, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if r.Name == "" {
-		log.Fatal("You must specify a Helm repository name")
+		Logger.Fatal("You must specify a Helm repository name")
 	}
 	if r.Url == "" {
-		log.Fatal("You must specify a Helm repository url")
+		Logger.Fatal("You must specify a Helm repository url")
 	}
 	args := []string{
 		"repo",

@@ -2,6 +2,8 @@ package kruise
 
 import (
 	"os"
+	"strings"
+	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/charmbracelet/log"
@@ -83,7 +85,8 @@ func (k *Konfig) unmarshalExactConfig() {
 	if err := viper.UnmarshalExact(&k.Manifest); err != nil {
 		Fatalf(err, "Unable to decode config into struct")
 	}
-	lvl := k.Manifest.LogLevel
+	logger := k.Manifest.Logger
+	lvl := logger.Level
 	if lvl != "" {
 		switch lvl {
 		case "debug":
@@ -96,6 +99,57 @@ func (k *Konfig) unmarshalExactConfig() {
 			Logger.SetLevel(log.ErrorLevel)
 		default:
 			Logger.Fatalf("Invalid verbosity level: %s", lvl)
+		}
+	}
+	if logger.Caller {
+		Logger.SetReportCaller(true)
+	}
+	if logger.TimeStamp {
+		Logger.SetReportTimestamp(true)
+	}
+	if logger.TimeFormat != "" {
+		// https://pkg.go.dev/time#pkg-constants
+		switch strings.ToLower(logger.TimeFormat) {
+		case "layout":
+			Logger.SetTimeFormat(time.Layout)
+		case "ansic":
+			Logger.SetTimeFormat(time.ANSIC)
+		case "unixdate":
+			Logger.SetTimeFormat(time.UnixDate)
+		case "rubydate":
+			Logger.SetTimeFormat(time.RubyDate)
+		case "rfc822":
+			Logger.SetTimeFormat(time.RFC822)
+		case "rfc822z":
+			Logger.SetTimeFormat(time.RFC822Z)
+		case "rfc850":
+			Logger.SetTimeFormat(time.RFC850)
+		case "rfc1123":
+			Logger.SetTimeFormat(time.RFC1123)
+		case "rfc1123z":
+			Logger.SetTimeFormat(time.RFC1123Z)
+		case "rfc3339":
+			Logger.SetTimeFormat(time.RFC3339)
+		case "rfc3339nano":
+			Logger.SetTimeFormat(time.RFC3339Nano)
+		case "kitchen":
+			Logger.SetTimeFormat(time.Kitchen)
+		case "stamp":
+			Logger.SetTimeFormat(time.Stamp)
+		case "stampmilli":
+			Logger.SetTimeFormat(time.StampMilli)
+		case "stampmicro":
+			Logger.SetTimeFormat(time.StampMicro)
+		case "stampnano":
+			Logger.SetTimeFormat(time.StampNano)
+		case "datetime":
+			Logger.SetTimeFormat(time.DateTime)
+		case "dateonly":
+			Logger.SetTimeFormat(time.DateOnly)
+		case "timeonly":
+			Logger.SetTimeFormat(time.TimeOnly)
+		default:
+			Logger.Fatalf("Invalid time format %s\nValid time formats can be found here: https://pkg.go.dev/time#pkg-constants", logger.TimeFormat)
 		}
 	}
 	Logger.Infof("Using config file: %s", viper.ConfigFileUsed())

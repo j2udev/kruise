@@ -14,8 +14,15 @@ type (
 	KruiseConfig struct {
 		APIVersion string       `mapstructure:"apiVersion"`
 		Kind       string       `mapstructure:"kind"`
-		LogLevel   string       `mapstructure:"logLevel"`
+		Logger     LoggerConfig `mapstructure:"logger"`
 		Deploy     DeployConfig `mapstructure:"deploy"`
+	}
+
+	LoggerConfig struct {
+		Level      string `mapstructure:"level"`
+		TimeStamp  bool   `mapstructure:"enableTimestamp"`
+		TimeFormat string `mapstructure:"timeFormat"`
+		Caller     bool   `mapstructure:"enableCaller"`
 	}
 
 	// DeployConfig represents a map of dynamic Deployments
@@ -75,7 +82,7 @@ type (
 	HelmChart struct {
 		ChartName     string   `mapstructure:"chartName"`
 		ReleaseName   string   `mapstructure:"releaseName"`
-		ChartPath     string   `mapstructure:"chartPath"`
+		RepoName      string   `mapstructure:"repoName"`
 		Namespace     string   `mapstructure:"namespace"`
 		Values        []string `mapstructure:"values"`
 		SetValues     []string `mapstructure:"setValues"`

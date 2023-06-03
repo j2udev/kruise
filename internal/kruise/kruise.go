@@ -5,7 +5,6 @@ package kruise
 
 import (
 	"os"
-	"time"
 
 	"github.com/charmbracelet/log"
 )
@@ -32,11 +31,6 @@ func InitializeConfig() {
 
 // InitializeLogger is used to initialize the Kruise logger
 func InitializeLogger() {
-	logger := log.NewWithOptions(os.Stderr, log.Options{
-		ReportCaller:    true,
-		ReportTimestamp: true,
-		TimeFormat:      time.Kitchen,
-	})
-	Logger = logger
+	Logger = log.New(os.Stderr)
 	Logger.SetLevel(log.WarnLevel)
 }

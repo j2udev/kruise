@@ -1,5 +1,10 @@
 apiVersion: v1alpha3
 kind: Config
+logger:
+  level: info
+  enableCaller: false
+  enableTimestamp: true
+  timeFormat: timeonly
 deploy:
   profiles:
     - name: observability
@@ -47,7 +52,7 @@ deploy:
           chartName: base
           releaseName: istio-base
           namespace: istio-system
-          chartPath: istio/base
+          repoName: istio
           version: 1.14.1
           values:
           - values/istio-base-values.yaml
@@ -57,7 +62,7 @@ deploy:
           chartName: istiod
           releaseName: istiod
           namespace: istio-system
-          chartPath: istio/istiod
+          repoName: istio
           version: 1.14.1
           values:
           - values/istiod-values.yaml
@@ -67,7 +72,7 @@ deploy:
           chartName: gateway
           releaseName: istio-ingressgateway
           namespace: istio-system
-          chartPath: istio/gateway
+          repoName: istio
           version: 1.14.1
           values:
           - values/istio-gateway-values.yaml
@@ -94,7 +99,7 @@ deploy:
           chartName: jaeger
           releaseName: jaeger
           namespace: tracing
-          chartPath: jaegertracing/jaeger
+          repoName: jaegertracing
           version: 0.57.1
           values:
           - values/jaeger-values.yaml
@@ -113,7 +118,7 @@ deploy:
           chartName: loki
           releaseName: loki
           namespace: logging
-          chartPath: grafana/loki-stack
+          repoName: grafana
           version: 2.6.5
           installArgs:
           - --create-namespace
@@ -138,7 +143,7 @@ deploy:
           chartName: kube-prometheus-stack
           releaseName: prometheus-operator
           namespace: monitoring
-          chartPath: prometheus-community/kube-prometheus-stack
+          repoName: prometheus-community
           version: 36.0.2
           values:
           - values/prometheus-operator-values.yaml
