@@ -115,7 +115,7 @@ deploy:
           url: https://grafana.github.io/helm-charts
         charts:
         - priority: 3
-          chartName: loki
+          chartName: loki-stack
           releaseName: loki
           namespace: logging
           repoName: grafana
