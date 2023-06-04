@@ -77,6 +77,7 @@ type (
 		Url     string `mapstructure:"url"`
 		Name    string `mapstructure:"name"`
 		Private bool   `mapstructure:"private"`
+		Init    bool   `mapstructure:"init"`
 	}
 
 	// HelmChart represents Helm chart information
@@ -91,6 +92,7 @@ type (
 		UninstallArgs []string `mapstructure:"uninstallArgs"`
 		Priority      int      `mapstructure:"priority"`
 		Version       string   `mapstructure:"version"`
+		Init          bool     `mapstructure:"init"`
 	}
 
 	// KubectlSecrets represents different types of Kubernetes secrets
@@ -104,6 +106,7 @@ type (
 		Name      string   `mapstructure:"name"`
 		Namespace string   `mapstructure:"namespace"`
 		Literal   []KeyVal `mapstructure:"literal"`
+		Init      bool     `mapstructure:"init"`
 	}
 
 	// KubectlDockerRegistrySecret represents a docker-registry Kubernetes secret
@@ -111,6 +114,7 @@ type (
 		Name      string `mapstructure:"name"`
 		Namespace string `mapstructure:"namespace"`
 		Registry  string `mapstructure:"registry"`
+		Init      bool   `mapstructure:"init"`
 	}
 
 	// KeyVal is used to defined key values pairs as separate parameters
@@ -124,8 +128,9 @@ type (
 		Namespace string   `mapstructure:"namespace"`
 		Priority  int      `mapstructure:"priority"`
 		Paths     []string `mapstructure:"paths"`
+		Init    bool     `mapstructure:"init"`
 	}
-)
+
 
 // GetVersion is used to get the apiVersion of the Kruise config
 func (c *KruiseConfig) GetVersion() string {

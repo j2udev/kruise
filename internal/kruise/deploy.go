@@ -11,7 +11,8 @@ type (
 	Deployment latest.Deployment
 	// Deployments is a slice of Deployment objects
 	Deployments []Deployment
-	secretRef   struct {
+	// k8sRef is a helper struct used in deduplicating k8s resources
+	k8sRef struct {
 		Name      string
 		Namespace string
 	}
@@ -80,16 +81,16 @@ func getValidInstallers(args []string) Installers {
 func getValidKubectlSecrets(args []string) Installers {
 	deps := getValidDeployments(args)
 	var installers Installers
-	secrets := make(map[secretRef]Installer)
+	secrets := make(map[k8sRef]Installer)
 	for _, d := range deps {
 		kubectlDeployment := newKubectlDeployment(d.Kubectl)
 		genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
 		dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
 		for _, s := range genericSecrets {
-			secrets[secretRef{s.Name, s.Namespace}] = s
+			secrets[k8sRef{s.Name, s.Namespace}] = s
 		}
 		for _, s := range dockerRegistrySecrets {
-			secrets[secretRef{s.Name, s.Namespace}] = s
+			secrets[k8sRef{s.Name, s.Namespace}] = s
 		}
 	}
 	for _, v := range secrets {
