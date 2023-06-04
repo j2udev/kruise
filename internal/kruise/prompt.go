@@ -1,38 +1,21 @@
 package kruise
 
 import (
-	"fmt"
-
-	"github.com/manifoldco/promptui"
+	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/cqroot/prompt"
+	"github.com/cqroot/prompt/input"
 )
 
-// credentialPrompt is used to prompt the user for credentials
-func credentialPrompt(usernamePrompt string, passwordPrompt string) (username string, password string, err error) {
-	validate := func(input string) error {
-		return nil
-	}
-	u := promptui.Prompt{
-		Label:    usernamePrompt,
-		Validate: validate,
-	}
-	p := promptui.Prompt{
-		Label:    passwordPrompt,
-		Validate: validate,
-		Mask:     '*',
-	}
-	c := promptui.Prompt{
-		Label:    "Please confirm your password",
-		Validate: validate,
-		Mask:     '*',
-	}
-	username, err = u.Run()
+func normalInputPrompt(p string) string {
+	return inputPrompt(p, input.EchoNormal)
+}
+
+func sensitiveInputPrompt(p string) string {
+	return inputPrompt(p, input.EchoPassword)
+}
+
+func inputPrompt(p string, mode textinput.EchoMode) string {
+	val, err := prompt.New().Ask(p).Input("", input.WithEchoMode(mode))
 	Fatal(err)
-	password, err = p.Run()
-	Fatal(err)
-	validationPassword, err := c.Run()
-	Fatal(err)
-	if password != validationPassword {
-		return "", "", fmt.Errorf("passwords do not match")
-	}
-	return username, password, nil
+	return val
 }

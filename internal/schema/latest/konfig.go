@@ -18,11 +18,12 @@ type (
 		Deploy     DeployConfig `mapstructure:"deploy"`
 	}
 
+	// LoggerConfig is used to define charm log configuration
 	LoggerConfig struct {
 		Level      string `mapstructure:"level"`
+		Caller     bool   `mapstructure:"enableCaller"`
 		TimeStamp  bool   `mapstructure:"enableTimestamp"`
 		TimeFormat string `mapstructure:"timeFormat"`
-		Caller     bool   `mapstructure:"enableCaller"`
 	}
 
 	// DeployConfig represents a map of dynamic Deployments
@@ -67,7 +68,7 @@ type (
 
 	// KubectlDeployment represents multiple Kubectl secrets and Kubectl manifests
 	KubectlDeployment struct {
-		Secrets   []KubectlSecret   `mapstructure:"secrets"`
+		Secrets   KubectlSecrets    `mapstructure:"secrets"`
 		Manifests []KubectlManifest `mapstructure:"manifests"`
 	}
 
@@ -92,12 +93,30 @@ type (
 		Version       string   `mapstructure:"version"`
 	}
 
-	// KubectlSecret represents Kubectl secret information
-	KubectlSecret struct {
-		Type      string `mapstructure:"type"`
+	// KubectlSecrets represents different types of Kubernetes secrets
+	KubectlSecrets struct {
+		Generic        []KubectlGenericSecret        `mapstructure:"generic"`
+		DockerRegistry []KubectlDockerRegistrySecret `mapstructure:"dockerRegistry"`
+	}
+
+	// KubectlGenericSecret represents a generic Kubernetes secret
+	KubectlGenericSecret struct {
+		Name      string   `mapstructure:"name"`
+		Namespace string   `mapstructure:"namespace"`
+		Literal   []KeyVal `mapstructure:"literal"`
+	}
+
+	// KubectlDockerRegistrySecret represents a docker-registry Kubernetes secret
+	KubectlDockerRegistrySecret struct {
 		Name      string `mapstructure:"name"`
 		Namespace string `mapstructure:"namespace"`
-		Registry  string `mapstructure:"registry,omitempty"`
+		Registry  string `mapstructure:"registry"`
+	}
+
+	// KeyVal is used to defined key values pairs as separate parameters
+	KeyVal struct {
+		Key string `mapstructure:"key"`
+		Val string `mapstructure:"value"`
 	}
 
 	// KubectlManifest represents Kubectl manifest information

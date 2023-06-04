@@ -11,6 +11,10 @@ type (
 	Deployment latest.Deployment
 	// Deployments is a slice of Deployment objects
 	Deployments []Deployment
+	secretRef   struct {
+		Name      string
+		Namespace string
+	}
 )
 
 // Deploy determines valid deployments from args and passes the cobra Cmd
@@ -72,24 +76,51 @@ func getValidInstallers(args []string) Installers {
 	return installers
 }
 
-// getValidInitInstallers gets all valid initial installers given passed arguments
-func getValidInitInstallers(args []string) Installers {
+// getValidKubectlSecrets gets all valid KubectlSecrets given passed arguments
+func getValidKubectlSecrets(args []string) Installers {
 	deps := getValidDeployments(args)
-	set := make(map[Installer]bool)
+	var installers Installers
+	secrets := make(map[secretRef]Installer)
 	for _, d := range deps {
-		secrets := newKubectlDeployment(d.Kubectl).getKubectlSecrets()
-		repositories := newHelmDeployment(d.Helm).getHelmRepositories()
-		for _, s := range secrets {
-			set[s] = true
+		kubectlDeployment := newKubectlDeployment(d.Kubectl)
+		genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
+		dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
+		for _, s := range genericSecrets {
+			secrets[secretRef{s.Name, s.Namespace}] = s
 		}
-		for _, r := range repositories {
-			set[r] = true
+		for _, s := range dockerRegistrySecrets {
+			secrets[secretRef{s.Name, s.Namespace}] = s
 		}
 	}
+	for _, v := range secrets {
+		installers = append(installers, v)
+	}
+	return installers
+}
+
+// getValidHelmRepos gets all valid HelmRepositories given passed arguments
+func getValidHelmRepos(args []string) Installers {
+	deps := getValidDeployments(args)
 	var installers Installers
-	for k := range set {
+	repos := make(map[Installer]bool)
+	for _, d := range deps {
+		helmDeployment := newHelmDeployment(d.Helm)
+		repositories := helmDeployment.getHelmRepositories()
+		for _, r := range repositories {
+			repos[r] = true
+		}
+	}
+	for k := range repos {
 		installers = append(installers, k)
 	}
+	return installers
+}
+
+// getValidInitInstallers gets all valid initial installers given passed arguments
+func getValidInitInstallers(args []string) Installers {
+	var installers Installers
+	installers = append(installers, getValidKubectlSecrets(args)...)
+	installers = append(installers, getValidHelmRepos(args)...)
 	return installers
 }
 

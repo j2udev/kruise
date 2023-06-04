@@ -19,7 +19,7 @@ type (
 	Installers []Installer
 	// KruiseInstaller represents a union type of Kruise Installer implementations
 	KruiseInstaller interface {
-		HelmRepository | HelmChart | KubectlSecret | KubectlManifest
+		HelmRepository | HelmChart | KubectlGenericSecret | KubectlDockerRegistrySecret | KubectlManifest
 	}
 )
 
@@ -27,19 +27,13 @@ type (
 // installed during initialization (i.e. HelmRepositories and KubectlSecrets)
 func Init(fs *pflag.FlagSet, installers ...Installer) {
 	hasHelmDeployment := false
-	u := make(map[string]Installer)
 	for _, i := range installers {
 		switch d := i.(type) {
-		case KubectlSecret:
-			// TODO: deduplicate the creation of secrets
+		case KubectlDockerRegistrySecret, KubectlGenericSecret:
 			i.Install(fs)
 		case HelmRepository:
 			hasHelmDeployment = true
-			repo := d.Url
-			if _, ok := u[repo]; !ok {
-				u[repo] = i
-				i.Install(fs)
-			}
+			i.Install(fs)
 		default:
 			Logger.Errorf("Invalid installer for the Init() function: %v", d)
 		}
@@ -126,8 +120,8 @@ func uninstalls(fs *pflag.FlagSet, installers ...Installer) {
 	}
 }
 
-// uninstallc is used to concurrently invoke the uninstall functions of the given
-// Installers
+// uninstallc is used to concurrently invoke the uninstall functions of the
+// given Installers
 //
 // Waitgroups are contructed based on Installer Priority where each batch of
 // prioritized deployments are executed concurrently

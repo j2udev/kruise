@@ -1,6 +1,7 @@
 package kruise
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -63,7 +64,7 @@ func (r HelmRepository) Install(fs *pflag.FlagSet) {
 	if !d {
 		checkHelm()
 	}
-	Warn(helmExecute(d, r.installArgs(fs)))
+	Error(helmExecute(d, r.installArgs(fs)))
 }
 
 // Uninstall is used to execute a Helm repo remove command
@@ -73,7 +74,7 @@ func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
 	if !d {
 		checkHelm()
 	}
-	Warn(helmExecute(d, r.uninstallArgs(fs)))
+	Error(helmExecute(d, r.uninstallArgs(fs)))
 }
 
 // GetPriority is used to get the priority of the installer
@@ -190,7 +191,7 @@ func (c HelmChart) uninstallArgs(fs *pflag.FlagSet) []string {
 
 // installArgs is used to build Helm repo add CLI args given a FlagSet
 func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
-	sdr, err := fs.GetBool("dry-run")
+	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if r.Name == "" {
 		Logger.Fatal("You must specify a Helm repository name")
@@ -203,23 +204,18 @@ func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
 		"add",
 		r.Name,
 		r.Url,
-		"--force-update",
+		"--force-update", //TODO: force update as the default behavior is probably overkill; think about adding an override flag or something
 	}
 	if r.Private {
 		u := "***"
-		p := []byte("***")
-		if !sdr {
-			var up, pp string
-			up = "Please enter your username for the " + r.Name + " Helm repository"
-			pp = "Please enter your password for the " + r.Name + " Helm repository"
-			un, pw, err := credentialPrompt(up, pp)
-			Fatal(err)
-			u = un
-			p = []byte(pw)
+		p := "***"
+		if !d {
+			u = normalInputPrompt(fmt.Sprintf("Please enter your username for the %s Helm repository", r.Name))
+			p = sensitiveInputPrompt(fmt.Sprintf("Please enter your password for the %s Helm repository", r.Name))
 		}
 		args = append(args,
 			"--username", u,
-			"--password", string(p),
+			"--password", p,
 			"--pass-credentials")
 	}
 	return args

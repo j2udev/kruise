@@ -1,6 +1,7 @@
 package kruise
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/j2udev/kruise/internal/schema/latest"
@@ -8,19 +9,26 @@ import (
 )
 
 type (
-	// KubectlDeployment encapsulates Helm objects like KubectlSecrets and
-	// KubectlManifests for a given deployment
+	// KubectlDeployment encapsulates Helm objects like KubectlGenericSecrets,
+	// KubectlDockerRegistrySecrets and KubectlManifests for a given deployment
 	KubectlDeployment latest.KubectlDeployment
-	// KubectlSecret represents information about a Kubectl secret
-	KubectlSecret latest.KubectlSecret
 	// KubectlManifest represents information about a Kubectl manifest
 	KubectlManifest latest.KubectlManifest
+	// KubectlGenericSecret represents information about a generic Kubernetes
+	// secret
+	KubectlGenericSecret latest.KubectlGenericSecret
+	// KubectlDockerRegistrySecret represents information about a docker-registry
+	// Kubernetes secret
+	KubectlDockerRegistrySecret latest.KubectlDockerRegistrySecret
 	// KubectlDeployments represents a slice of KubectlDeployment objects
 	KubectlDeployments []KubectlDeployment
-	// KubectlSecrets represents a slice of KubectlSecret objects
-	KubectlSecrets []KubectlSecret
-	// KubectlManifest represents a slice of KubectlManifest objects
+	// KubectlManifests represents a slice of KubectlManifest objects
 	KubectlManifests []KubectlManifest
+	// KubectlGenericSecrets represents a slice of KubectlGenericSecret objects
+	KubectlGenericSecrets []KubectlGenericSecret
+	// KubectlDockerRegistrySecrets represents a slice of
+	// KubectlDockerRegistrySecret objects
+	KubectlDockerRegistrySecrets []KubectlDockerRegistrySecret
 )
 
 // Install is used to execute a Kubectl apply command
@@ -34,23 +42,8 @@ func (m KubectlManifest) Install(fs *pflag.FlagSet) {
 	Error(kubectlExecute(d, m.installArgs(fs)))
 }
 
-// Uninstall is used to execute a Kubectl delete command
-func (m KubectlManifest) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("dry-run")
-	Fatal(err)
-	if !d {
-		checkKubectl()
-	}
-	Warn(kubectlExecute(d, m.uninstallArgs(fs)))
-}
-
-// GetPriority is used to get the priority of the installer
-func (m KubectlManifest) GetPriority() int {
-	return m.Priority
-}
-
-// Install is used to execute a Kubectl create secret command
-func (s KubectlSecret) Install(fs *pflag.FlagSet) {
+// Install is used to execute a Kubectl create generic secret command
+func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
@@ -62,8 +55,41 @@ func (s KubectlSecret) Install(fs *pflag.FlagSet) {
 	Error(kubectlExecute(d, s.installArgs(fs)))
 }
 
-// Install is used to execute a Kubectl delete secret command
-func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
+// Install is used to execute a Kubectl create docker-registry secret command
+func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	if !d {
+		checkKubectl()
+	}
+	Debug(kubectlCreateNamespace(d, s.Namespace))
+	// for now, just overwrite any existing secret
+	s.Uninstall(fs)
+	Error(kubectlExecute(d, s.installArgs(fs)))
+}
+
+// Uninstall is used to execute a Kubectl delete command
+func (m KubectlManifest) Uninstall(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	if !d {
+		checkKubectl()
+	}
+	Warn(kubectlExecute(d, m.uninstallArgs(fs)))
+}
+
+// Uninstall is used to execute a Kubectl delete secret command
+func (s KubectlGenericSecret) Uninstall(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	if !d {
+		checkKubectl()
+	}
+	Debug(kubectlDeleteSecret(d, s.uninstallArgs(fs)))
+}
+
+// Uninstall is used to execute a Kubectl delete secret command
+func (s KubectlDockerRegistrySecret) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
 	Fatal(err)
 	if !d {
@@ -73,37 +99,45 @@ func (s KubectlSecret) Uninstall(fs *pflag.FlagSet) {
 }
 
 // GetPriority is used to get the priority of the installer
-func (s KubectlSecret) GetPriority() int {
-	// For now, KubectlSecrets are just installed first
+func (m KubectlManifest) GetPriority() int {
+	return m.Priority
+}
+
+// GetPriority is used to get the priority of the installer
+func (s KubectlGenericSecret) GetPriority() int {
+	// for now, kubectl secrets are just installed first
 	return 0
 }
 
-// newKubectlDeployment is a helper function for dealing with the latest.KubectlDeployment
-// to KubectlDeployment type definition
+// GetPriority is used to get the priority of the installer
+func (s KubectlDockerRegistrySecret) GetPriority() int {
+	// for now, kubectl secrets are just installed first
+	return 0
+}
+
+// newKubectlDeployment is a helper function for dealing with the
+// latest.KubectlDeployment to KubectlDeployment type definition
 func newKubectlDeployment(dep latest.KubectlDeployment) KubectlDeployment {
 	return KubectlDeployment(dep)
 }
 
-// newKubectlSecret is a helper function for dealing with the latest.KubectlSecret
-// to KubectlSecret type definition
-func newKubectlSecret(sec latest.KubectlSecret) KubectlSecret {
-	return KubectlSecret(sec)
-}
-
-// newKubectlSecrets is a helper function for dealing with the latest.KubectlSecret
-// to KubectlSecret type definition
-func newKubectlSecrets(secs []latest.KubectlSecret) KubectlSecrets {
-	var s KubectlSecrets
-	for _, sec := range secs {
-		s = append(s, newKubectlSecret(sec))
-	}
-	return s
-}
-
-// newKubectlManifest is a helper function for dealing with the latest.KubectlManifest
-// to KubectlManifest type definition
+// newKubectlManifest is a helper function for dealing with the
+// latest.KubectlManifest to KubectlManifest type definition
 func newKubectlManifest(man latest.KubectlManifest) KubectlManifest {
 	return KubectlManifest(man)
+}
+
+// newKubectlGenericSecret is a helper function for dealing with the
+// latest.KubectlGenericSecret to KubectlGenericSecret type definition
+func newKubectlGenericSecret(sec latest.KubectlGenericSecret) KubectlGenericSecret {
+	return KubectlGenericSecret(sec)
+}
+
+// newKubectlDockerRegistrySecret is a helper function for dealing with the
+// latest.KubectlDockerRegistrySecret to KubectlDockerRegistrySecret type
+// definition
+func newKubectlDockerRegistrySecret(sec latest.KubectlDockerRegistrySecret) KubectlDockerRegistrySecret {
+	return KubectlDockerRegistrySecret(sec)
 }
 
 // newKubectlManifests is a helper function for dealing with the latest.KubectlManifest
@@ -116,10 +150,25 @@ func newKubectlManifests(mans []latest.KubectlManifest) KubectlManifests {
 	return m
 }
 
-// getKubectlSecrets is a helper function for grabbing the KubectlSecrets
-// from a KubectlDeployment
-func (d KubectlDeployment) getKubectlSecrets() KubectlSecrets {
-	return newKubectlSecrets(d.Secrets)
+// newKubectlGenericSecrets is a helper function for dealing with the
+// latest.KubectlGenericSecrets to KubectlGenericSecrets type definition
+func newKubectlGenericSecrets(secs []latest.KubectlGenericSecret) KubectlGenericSecrets {
+	var s KubectlGenericSecrets
+	for _, sec := range secs {
+		s = append(s, newKubectlGenericSecret(sec))
+	}
+	return s
+}
+
+// newKubectlDockerRegistrySecrets is a helper function for dealing with the
+// latest.KubectlDockerRegistrySecrets to KubectlDockerRegistrySecrets type
+// definition
+func newKubectlDockerRegistrySecrets(secs []latest.KubectlDockerRegistrySecret) KubectlDockerRegistrySecrets {
+	var s KubectlDockerRegistrySecrets
+	for _, sec := range secs {
+		s = append(s, newKubectlDockerRegistrySecret(sec))
+	}
+	return s
 }
 
 // getKubectlManifests is a helper function for grabbing the KubectlManifests
@@ -128,12 +177,69 @@ func (d KubectlDeployment) getKubectlManifests() KubectlManifests {
 	return newKubectlManifests(d.Manifests)
 }
 
+// getKubectlGenericSecrets is a helper function for grabbing the
+// KubectlGenericSecrets from a KubectlDeployment
+func (d KubectlDeployment) getKubectlGenericSecrets() KubectlGenericSecrets {
+	return newKubectlGenericSecrets(d.Secrets.Generic)
+}
+
+// getKubectlDockerRegistrySecrets is a helper function for grabbing the
+// KubectlDockerRegistrySecrets from a KubectlDeployment
+func (d KubectlDeployment) getKubectlDockerRegistrySecrets() KubectlDockerRegistrySecrets {
+	return newKubectlDockerRegistrySecrets(d.Secrets.DockerRegistry)
+}
+
 // installArgs is used to build Kubectl apply CLI args given a FlagSet
 func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 	args := []string{"apply", "--namespace", m.Namespace}
 	for _, p := range m.Paths {
 		args = append(args, "-f", p)
 	}
+	return args
+}
+
+// installArgs is used to build Kubectl create generic secret CLI args given a
+// FlagSet
+func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) []string {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	v := "***"
+	ns := "default"
+	args := []string{"create", "secret", "generic", s.Name}
+	if s.Namespace != "" {
+		ns = s.Namespace
+		args = append(args, "--namespace", ns)
+	}
+	for _, l := range s.Literal {
+		if l.Val != "" {
+			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, l.Val))
+		} else {
+			if !d {
+				v = sensitiveInputPrompt(fmt.Sprintf("Please enter a value for the secret `%s.%s` key: %s", s.Name, ns, l.Key))
+			}
+			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, v))
+		}
+	}
+	return args
+}
+
+// installArgs is used to build Kubectl create docker-registry secret CLI args
+// given a FlagSet
+func (s KubectlDockerRegistrySecret) installArgs(fs *pflag.FlagSet) []string {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	u := "***"
+	p := "***"
+	args := []string{"create", "secret", "docker-registry", s.Name}
+	if s.Namespace != "" {
+		args = append(args, "--namespace", s.Namespace)
+	}
+	args = append(args, "--docker-server", s.Registry)
+	if !d {
+		u = normalInputPrompt(fmt.Sprintf("Please enter a username for the %s container registry", s.Registry))
+		p = sensitiveInputPrompt(fmt.Sprintf("Please enter a password for the %s container registry", s.Registry))
+	}
+	args = append(args, "--docker-username", u, "--docker-password", string(p))
 	return args
 }
 
@@ -146,39 +252,18 @@ func (m KubectlManifest) uninstallArgs(fs *pflag.FlagSet) []string {
 	return args
 }
 
-// installArgs is used to build Kubectl create secret CLI args given a FlagSet
-func (s KubectlSecret) installArgs(fs *pflag.FlagSet) []string {
-	sdr, err := fs.GetBool("dry-run")
-	Fatal(err)
-	args := []string{"create", "secret"}
+// uninstallArgs is used to build Kubectl delete secret CLI args given a FlagSet
+func (s KubectlGenericSecret) uninstallArgs(fs *pflag.FlagSet) []string {
+	args := []string{"delete", "secret", s.Name}
+
 	if s.Namespace != "" {
 		args = append(args, "--namespace", s.Namespace)
-	}
-	switch s.Type {
-	case "docker-registry":
-		u := "***"
-		p := []byte("***")
-		args = append(args, "docker-registry", s.Name, "--docker-server", s.Registry)
-		if !sdr {
-			var up, pp string
-			up = "Please enter your username for the " + s.Registry + " container registry"
-			pp = "Please enter your password for the " + s.Registry + " container registry"
-			un, pw, err := credentialPrompt(up, pp)
-			Fatal(err)
-			u = un
-			p = []byte(pw)
-		}
-		args = append(args,
-			"--docker-username", u,
-			"--docker-password", string(p))
-	default:
-		Logger.Fatalf("kubectl secret type: %v not supported", s.Type)
 	}
 	return args
 }
 
 // uninstallArgs is used to build Kubectl delete secret CLI args given a FlagSet
-func (s KubectlSecret) uninstallArgs(fs *pflag.FlagSet) []string {
+func (s KubectlDockerRegistrySecret) uninstallArgs(fs *pflag.FlagSet) []string {
 	args := []string{"delete", "secret", s.Name}
 
 	if s.Namespace != "" {
@@ -188,6 +273,7 @@ func (s KubectlSecret) uninstallArgs(fs *pflag.FlagSet) []string {
 }
 
 // kubectlCreateNamespace is used to execute a kubectl create namespace command
+// hides unnecessary output
 func kubectlCreateNamespace(dry bool, n string) error {
 	return NewCmd("kubectl").
 		WithArgs([]string{"create", "namespace", n}).
@@ -198,6 +284,7 @@ func kubectlCreateNamespace(dry bool, n string) error {
 }
 
 // kubectlDeleteSecret is used to execute a kubectl delete secret command
+// hides unnecessary output
 func kubectlDeleteSecret(dry bool, args []string) error {
 	return NewCmd("kubectl").
 		WithArgs(args).
