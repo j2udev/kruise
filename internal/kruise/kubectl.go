@@ -52,6 +52,7 @@ func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 	Debug(kubectlCreateNamespace(d, s.Namespace))
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
+	fmt.Printf("Creating generic secret `%s` in the `%s` namespace\n", s.Name, s.Namespace)
 	Error(kubectlExecute(d, s.installArgs(fs)))
 }
 
@@ -65,6 +66,7 @@ func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
 	Debug(kubectlCreateNamespace(d, s.Namespace))
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
+	fmt.Printf("Creating docker-registry secret `%s` in the `%s` namespace\n", s.Name, s.Namespace)
 	Error(kubectlExecute(d, s.installArgs(fs)))
 }
 
@@ -113,6 +115,24 @@ func (s KubectlGenericSecret) GetPriority() int {
 func (s KubectlDockerRegistrySecret) GetPriority() int {
 	// for now, kubectl secrets are just installed first
 	return 0
+}
+
+// IsInit is used to determine whether the installer should be installed during
+// initialization
+func (m KubectlManifest) IsInit() bool {
+	return m.Init
+}
+
+// IsInit is used to determine whether the installer should be installed during
+// initialization
+func (m KubectlGenericSecret) IsInit() bool {
+	return m.Init
+}
+
+// IsInit is used to determine whether the installer should be installed during
+// initialization
+func (m KubectlDockerRegistrySecret) IsInit() bool {
+	return m.Init
 }
 
 // newKubectlDeployment is a helper function for dealing with the
@@ -215,7 +235,7 @@ func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) []string {
 			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, l.Val))
 		} else {
 			if !d {
-				v = sensitiveInputPrompt(fmt.Sprintf("Please enter a value for the secret `%s.%s` key: %s", s.Name, ns, l.Key))
+				v = sensitiveInputPrompt(fmt.Sprintf("Please enter a value for key: %s", l.Key))
 			}
 			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, v))
 		}
@@ -236,8 +256,8 @@ func (s KubectlDockerRegistrySecret) installArgs(fs *pflag.FlagSet) []string {
 	}
 	args = append(args, "--docker-server", s.Registry)
 	if !d {
-		u = normalInputPrompt(fmt.Sprintf("Please enter a username for the %s container registry", s.Registry))
-		p = sensitiveInputPrompt(fmt.Sprintf("Please enter a password for the %s container registry", s.Registry))
+		u = normalInputPrompt("Please enter a username")
+		p = sensitiveInputPrompt("Please enter a password")
 	}
 	args = append(args, "--docker-username", u, "--docker-password", string(p))
 	return args

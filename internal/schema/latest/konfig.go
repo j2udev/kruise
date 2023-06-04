@@ -128,9 +128,9 @@ type (
 		Namespace string   `mapstructure:"namespace"`
 		Priority  int      `mapstructure:"priority"`
 		Paths     []string `mapstructure:"paths"`
-		Init    bool     `mapstructure:"init"`
+		Init      bool     `mapstructure:"init"`
 	}
-
+)
 
 // GetVersion is used to get the apiVersion of the Kruise config
 func (c *KruiseConfig) GetVersion() string {

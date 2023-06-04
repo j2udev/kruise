@@ -18,14 +18,14 @@ type (
 	}
 )
 
-// Deploy determines valid deployments from args and passes the cobra Cmd
+// Deploy determines passed deployments from args and passes the cobra Cmd
 // FlagSet to the Uninstall function
 func Deploy(fs *pflag.FlagSet, args []string) {
 	init, err := fs.GetBool("init")
 	Fatal(err)
-	d := getValidInstallers(args)
+	d := getPassedInstallers(args)
 	if init {
-		i := getValidInitInstallers(args)
+		i := getPassedInitInstallers(args)
 		Init(fs, i...)
 	}
 	Install(fs, d...)
@@ -49,10 +49,10 @@ func GetDeployProfiles() Profiles {
 	return profs
 }
 
-// Delete determines valid deployments from args and passes the cobra Cmd
+// Delete determines passed deployments from args and passes the cobra Cmd
 // FlagSet to the Uninstall function
 func Delete(fs *pflag.FlagSet, args []string) {
-	d := getValidInstallers(args)
+	d := getPassedInstallers(args)
 	Uninstall(fs, d...)
 }
 
@@ -64,22 +64,66 @@ func newDeployment(dep latest.Deployment) Deployment {
 	return Deployment(dep)
 }
 
-// getValidInstallers gets all valid deployments given passed arguments
-func getValidInstallers(args []string) Installers {
-	deps := getValidDeployments(args)
+// getPassedInstallers gets all passed deployments given passed arguments
+func getPassedInstallers(args []string) Installers {
+	allInstallers := getAllPassedInstallers(args)
 	var installers Installers
-	for _, v := range deps {
-		charts := newHelmDeployment(v.Helm).getHelmCharts()
-		manifests := newKubectlDeployment(v.Kubectl).getKubectlManifests()
-		installers = append(installers, toInstallers(charts)...)
-		installers = append(installers, toInstallers(manifests)...)
+	for _, i := range allInstallers {
+		if !i.IsInit() {
+			installers = append(installers, i)
+		}
 	}
 	return installers
 }
 
-// getValidKubectlSecrets gets all valid KubectlSecrets given passed arguments
-func getValidKubectlSecrets(args []string) Installers {
-	deps := getValidDeployments(args)
+// getPassedInitInstallers gets all passed initial installers given passed arguments
+func getPassedInitInstallers(args []string) Installers {
+	allInstallers := getAllPassedInstallers(args)
+	var installers Installers
+	for _, i := range allInstallers {
+		if i.IsInit() {
+			installers = append(installers, i)
+		}
+	}
+	return installers
+}
+
+// getAllPassedInstallers gets all passed deployments given passed arguments
+func getAllPassedInstallers(args []string) Installers {
+	var installers Installers
+	charts := getPassedHelmCharts(args)
+	manifests := getPassedKubectlManifests(args)
+	repos := getPassedHelmRepos(args)
+	secrets := getPassedKubectlSecrets(args)
+	installers = append(installers, charts...)
+	installers = append(installers, manifests...)
+	installers = append(installers, repos...)
+	installers = append(installers, secrets...)
+	return installers
+}
+
+// getPassedKubectlManifests gets all passed KubectlManifests given passed
+// arguments
+func getPassedKubectlManifests(args []string) Installers {
+	deps := getPassedDeployments(args)
+	var installers Installers
+	manifests := make(map[Installer]bool)
+	for _, d := range deps {
+		kubectlDeployment := newKubectlDeployment(d.Kubectl)
+		man := kubectlDeployment.getKubectlManifests()
+		for _, m := range man {
+			manifests[m] = true
+		}
+	}
+	for k := range manifests {
+		installers = append(installers, k)
+	}
+	return installers
+}
+
+// getPassedKubectlSecrets gets all passed KubectlSecrets given passed arguments
+func getPassedKubectlSecrets(args []string) Installers {
+	deps := getPassedDeployments(args)
 	var installers Installers
 	secrets := make(map[k8sRef]Installer)
 	for _, d := range deps {
@@ -99,9 +143,27 @@ func getValidKubectlSecrets(args []string) Installers {
 	return installers
 }
 
-// getValidHelmRepos gets all valid HelmRepositories given passed arguments
-func getValidHelmRepos(args []string) Installers {
-	deps := getValidDeployments(args)
+// getPassedHelmCharts gets all passed HelmCharts given passed arguments
+func getPassedHelmCharts(args []string) Installers {
+	deps := getPassedDeployments(args)
+	var installers Installers
+	charts := make(map[Installer]bool)
+	for _, d := range deps {
+		helmDeployment := newHelmDeployment(d.Helm)
+		cha := helmDeployment.getHelmCharts()
+		for _, c := range cha {
+			charts[c] = true
+		}
+	}
+	for k := range charts {
+		installers = append(installers, k)
+	}
+	return installers
+}
+
+// getPassedHelmRepos gets all passed HelmRepositories given passed arguments
+func getPassedHelmRepos(args []string) Installers {
+	deps := getPassedDeployments(args)
 	var installers Installers
 	repos := make(map[Installer]bool)
 	for _, d := range deps {
@@ -117,12 +179,20 @@ func getValidHelmRepos(args []string) Installers {
 	return installers
 }
 
-// getValidInitInstallers gets all valid initial installers given passed arguments
-func getValidInitInstallers(args []string) Installers {
-	var installers Installers
-	installers = append(installers, getValidKubectlSecrets(args)...)
-	installers = append(installers, getValidHelmRepos(args)...)
-	return installers
+// getPassedDeployments gets all passed deployments given passed arguments
+// func getPassedDeployments(args []string) map[string]Deployment {
+func getPassedDeployments(args []string) Deployments {
+	deployments := Kfg.Manifest.Deploy.Deployments
+	var deps Deployments
+	dedup := deduplicateArgs(args)
+	for _, arg := range dedup {
+		for _, dep := range deployments {
+			if dep.Name == arg || contains(dep.Aliases, arg) {
+				deps = append(deps, newDeployment(dep))
+			}
+		}
+	}
+	return deps
 }
 
 // deduplicateArgs is used to deduplicate the given args
@@ -151,23 +221,7 @@ func deduplicateArgs(args []string) []string {
 	return dedup
 }
 
-// getValidDeployments gets all valid deployments given passed arguments
-// func getValidDeployments(args []string) map[string]Deployment {
-func getValidDeployments(args []string) Deployments {
-	deployments := Kfg.Manifest.Deploy.Deployments
-	var deps Deployments
-	dedup := deduplicateArgs(args)
-	for _, arg := range dedup {
-		for _, dep := range deployments {
-			if dep.Name == arg || contains(dep.Aliases, arg) {
-				deps = append(deps, newDeployment(dep))
-			}
-		}
-	}
-	return deps
-}
-
-// argIsDeployment is used to determine if the passed argument is a valid deployment
+// argIsDeployment is used to determine if the passed argument is a passed deployment
 func argIsDeployment(arg string) (Deployment, bool) {
 	deployments := Kfg.Manifest.Deploy.Deployments
 	for _, dep := range deployments {
@@ -178,7 +232,7 @@ func argIsDeployment(arg string) (Deployment, bool) {
 	return Deployment{}, false
 }
 
-// argIsProfile is used to determine if the passed argument is a valid profile
+// argIsProfile is used to determine if the passed argument is a passed profile
 func argIsProfile(arg string) (Profile, bool) {
 	profiles := Kfg.Manifest.Deploy.Profiles
 	for _, prof := range profiles {

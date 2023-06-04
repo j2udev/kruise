@@ -42,21 +42,6 @@ func (c HelmChart) Install(fs *pflag.FlagSet) {
 	}
 }
 
-// Uninstall is used to execute a Helm uninstall command
-func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
-	d, err := fs.GetBool("dry-run")
-	Fatal(err)
-	if !d {
-		checkHelm()
-	}
-	Warn(helmExecute(d, c.uninstallArgs(fs)))
-}
-
-// GetPriority is used to get the priority of the installer
-func (c HelmChart) GetPriority() int {
-	return c.Priority
-}
-
 // Install is used to execute a Helm repo add command
 func (r HelmRepository) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
@@ -65,6 +50,16 @@ func (r HelmRepository) Install(fs *pflag.FlagSet) {
 		checkHelm()
 	}
 	Error(helmExecute(d, r.installArgs(fs)))
+}
+
+// Uninstall is used to execute a Helm uninstall command
+func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
+	d, err := fs.GetBool("dry-run")
+	Fatal(err)
+	if !d {
+		checkHelm()
+	}
+	Warn(helmExecute(d, c.uninstallArgs(fs)))
 }
 
 // Uninstall is used to execute a Helm repo remove command
@@ -78,9 +73,26 @@ func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
 }
 
 // GetPriority is used to get the priority of the installer
+func (c HelmChart) GetPriority() int {
+	return c.Priority
+}
+
+// GetPriority is used to get the priority of the installer
 func (r HelmRepository) GetPriority() int {
 	// For now, HelmRepositories are just installed first
 	return 0
+}
+
+// IsInit is used to determine whether the installer should be installed during
+// initialization
+func (m HelmChart) IsInit() bool {
+	return m.Init
+}
+
+// IsInit is used to determine whether the installer should be installed during
+// initialization
+func (m HelmRepository) IsInit() bool {
+	return m.Init
 }
 
 // newHelmDeployment is a helper function for dealing with the latest.HelmDeployment

@@ -14,6 +14,7 @@ type (
 		Install(fs *pflag.FlagSet)
 		Uninstall(fs *pflag.FlagSet)
 		GetPriority() int
+		IsInit() bool
 	}
 	// Installers represents a slice of Installer objects
 	Installers []Installer
@@ -29,7 +30,7 @@ func Init(fs *pflag.FlagSet, installers ...Installer) {
 	hasHelmDeployment := false
 	for _, i := range installers {
 		switch d := i.(type) {
-		case KubectlDockerRegistrySecret, KubectlGenericSecret:
+		case HelmChart, KubectlManifest, KubectlDockerRegistrySecret, KubectlGenericSecret:
 			i.Install(fs)
 		case HelmRepository:
 			hasHelmDeployment = true
