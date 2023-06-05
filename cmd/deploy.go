@@ -17,7 +17,7 @@ func NewDeployCmd() *cobra.Command {
 		WithRunFunc(deploy).
 		WithBoolPFlag("dry-run", "d", false, "output the command being performed under the hood").
 		WithBoolPFlag("concurrent", "c", false, "deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)").
-		WithBoolPFlag("init", "i", false, "add Helm repositories and create Kubernetes secrets for the specified options").
+		WithBoolPFlag("init", "i", false, "deploy anything that should only be deployed upon initialization").
 		Build()
 }
 
