@@ -122,22 +122,40 @@ func getPassedKubectlManifests(args []string) Installers {
 }
 
 // getPassedKubectlSecrets gets all passed KubectlSecrets given passed arguments
+// and consolidates the same secrets that are being created across multiple
+// namespaces
 func getPassedKubectlSecrets(args []string) Installers {
 	deps := getPassedDeployments(args)
 	var installers Installers
-	secrets := make(map[k8sRef]Installer)
+	gsecrets := make(map[string]KubectlGenericSecret)
+	dsecrets := make(map[string]KubectlDockerRegistrySecret)
 	for _, d := range deps {
 		kubectlDeployment := newKubectlDeployment(d.Kubectl)
 		genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
 		dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
 		for _, s := range genericSecrets {
-			secrets[k8sRef{s.Name, s.Namespace}] = s
+			hashedSecret := s.hash()
+			if val, ok := gsecrets[hashedSecret]; ok {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
+				gsecrets[hashedSecret] = val
+			} else {
+				gsecrets[hashedSecret] = s
+			}
 		}
 		for _, s := range dockerRegistrySecrets {
-			secrets[k8sRef{s.Name, s.Namespace}] = s
+			hashedSecret := s.hash()
+			if val, ok := dsecrets[hashedSecret]; ok {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
+				dsecrets[hashedSecret] = val
+			} else {
+				dsecrets[hashedSecret] = s
+			}
 		}
 	}
-	for _, v := range secrets {
+	for _, v := range gsecrets {
+		installers = append(installers, v)
+	}
+	for _, v := range dsecrets {
 		installers = append(installers, v)
 	}
 	return installers

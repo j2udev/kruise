@@ -1,8 +1,11 @@
 package kruise
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/j2udev/kruise/internal/schema/latest"
 	"github.com/spf13/pflag"
@@ -16,10 +19,20 @@ type (
 	KubectlManifest latest.KubectlManifest
 	// KubectlGenericSecret represents information about a generic Kubernetes
 	// secret
-	KubectlGenericSecret latest.KubectlGenericSecret
+	// The Namespaces field is used to support creating the same secret across
+	// multiple namespaces and only prompting the user once.
+	KubectlGenericSecret struct {
+		latest.KubectlGenericSecret
+		Namespaces []string
+	}
 	// KubectlDockerRegistrySecret represents information about a docker-registry
 	// Kubernetes secret
-	KubectlDockerRegistrySecret latest.KubectlDockerRegistrySecret
+	// The Namespaces field is used to support creating the same secret across
+	// multiple namespaces and only prompting the user once.
+	KubectlDockerRegistrySecret struct {
+		latest.KubectlDockerRegistrySecret
+		Namespaces []string
+	}
 	// KubectlDeployments represents a slice of KubectlDeployment objects
 	KubectlDeployments []KubectlDeployment
 	// KubectlManifests represents a slice of KubectlManifest objects
@@ -52,8 +65,22 @@ func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 	Debug(kubectlCreateNamespace(d, s.Namespace))
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
-	fmt.Printf("Creating generic secret `%s` in the `%s` namespace\n", s.Name, s.Namespace)
-	Error(kubectlExecute(d, s.installArgs(fs)))
+	switch len(s.Namespaces) {
+	case 0:
+		fmt.Printf("Creating generic secret %s in the default namespace\n", s.Name)
+	case 1:
+		fmt.Printf("Creating generic secret %s in the %s namespace\n", s.Name, s.Namespace)
+	default:
+		fmt.Printf("Creating generic secret %s in the %s namespaces\n", s.Name, s.Namespaces)
+	}
+	args := s.installArgs(fs)
+	for _, a := range args {
+		Logger.Debugf("%s %s", "kubectl", strings.Join(a, " "))
+		err = kubectlExecute(d, a)
+		if err != nil {
+			Logger.Error(err)
+		}
+	}
 }
 
 // Install is used to execute a Kubectl create docker-registry secret command
@@ -66,8 +93,22 @@ func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
 	Debug(kubectlCreateNamespace(d, s.Namespace))
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
-	fmt.Printf("Creating docker-registry secret `%s` in the `%s` namespace\n", s.Name, s.Namespace)
-	Error(kubectlExecute(d, s.installArgs(fs)))
+	switch len(s.Namespaces) {
+	case 0:
+		fmt.Printf("Creating docker-registry secret %s in the default namespace\n", s.Name)
+	case 1:
+		fmt.Printf("Creating docker-registry secret %s in the %s namespace\n", s.Name, s.Namespace)
+	default:
+		fmt.Printf("Creating docker-registry secret %s in the %s namespaces\n", s.Name, s.Namespaces)
+	}
+	args := s.installArgs(fs)
+	for _, a := range args {
+		Logger.Debugf("%s %s", "kubectl", strings.Join(a, " "))
+		err = kubectlExecute(d, a)
+		if err != nil {
+			Logger.Error(err)
+		}
+	}
 }
 
 // Uninstall is used to execute a Kubectl delete command
@@ -87,7 +128,14 @@ func (s KubectlGenericSecret) Uninstall(fs *pflag.FlagSet) {
 	if !d {
 		checkKubectl()
 	}
-	Debug(kubectlDeleteSecret(d, s.uninstallArgs(fs)))
+	args := s.uninstallArgs(fs)
+	for _, a := range args {
+		Logger.Debugf("%s %s", "kubectl", strings.Join(a, " "))
+		err = kubectlDeleteSecret(d, a)
+		if err != nil {
+			Logger.Debug(err)
+		}
+	}
 }
 
 // Uninstall is used to execute a Kubectl delete secret command
@@ -97,7 +145,14 @@ func (s KubectlDockerRegistrySecret) Uninstall(fs *pflag.FlagSet) {
 	if !d {
 		checkKubectl()
 	}
-	Debug(kubectlDeleteSecret(d, s.uninstallArgs(fs)))
+	args := s.uninstallArgs(fs)
+	for _, a := range args {
+		Logger.Debugf("%s %s", "kubectl", strings.Join(a, " "))
+		err = kubectlDeleteSecret(d, a)
+		if err != nil {
+			Logger.Debug(err)
+		}
+	}
 }
 
 // GetPriority is used to get the priority of the installer
@@ -150,14 +205,22 @@ func newKubectlManifest(man latest.KubectlManifest) KubectlManifest {
 // newKubectlGenericSecret is a helper function for dealing with the
 // latest.KubectlGenericSecret to KubectlGenericSecret type definition
 func newKubectlGenericSecret(sec latest.KubectlGenericSecret) KubectlGenericSecret {
-	return KubectlGenericSecret(sec)
+	// return KubectlGenericSecret(sec)
+	if sec.Namespace == "" {
+		sec.Namespace = "default"
+	}
+	return KubectlGenericSecret{sec, []string{sec.Namespace}}
 }
 
 // newKubectlDockerRegistrySecret is a helper function for dealing with the
 // latest.KubectlDockerRegistrySecret to KubectlDockerRegistrySecret type
 // definition
 func newKubectlDockerRegistrySecret(sec latest.KubectlDockerRegistrySecret) KubectlDockerRegistrySecret {
-	return KubectlDockerRegistrySecret(sec)
+	// return KubectlDockerRegistrySecret(sec)
+	if sec.Namespace == "" {
+		sec.Namespace = "default"
+	}
+	return KubectlDockerRegistrySecret{sec, []string{sec.Namespace}}
 }
 
 // newKubectlManifests is a helper function for dealing with the latest.KubectlManifest
@@ -220,47 +283,57 @@ func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 
 // installArgs is used to build Kubectl create generic secret CLI args given a
 // FlagSet
-func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) []string {
+func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) [][]string {
 	d, err := fs.GetBool("dry-run")
 	Fatal(err)
+	var iargs [][]string
+	var largs []string
 	v := "***"
-	ns := "default"
-	args := []string{"create", "secret", "generic", s.Name}
-	if s.Namespace != "" {
-		ns = s.Namespace
-		args = append(args, "--namespace", ns)
-	}
 	for _, l := range s.Literal {
 		if l.Val != "" {
-			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, l.Val))
+			largs = append(largs, "--from-literal", fmt.Sprintf("%s=%s", l.Key, l.Val))
 		} else {
 			if !d {
 				v = sensitiveInputPrompt(fmt.Sprintf("Please enter a value for key: %s", l.Key))
 			}
-			args = append(args, "--from-literal", fmt.Sprintf("%s=%s", l.Key, v))
+			largs = append(largs, "--from-literal", fmt.Sprintf("%s=%s", l.Key, v))
 		}
 	}
-	return args
+	for _, ns := range s.Namespaces {
+		args := []string{"create", "secret", "generic", s.Name}
+		if ns != "" && ns != "default" {
+			args = append(args, "--namespace", ns)
+		}
+		args = append(args, largs...)
+		iargs = append(iargs, args)
+	}
+	return iargs
 }
 
 // installArgs is used to build Kubectl create docker-registry secret CLI args
 // given a FlagSet
-func (s KubectlDockerRegistrySecret) installArgs(fs *pflag.FlagSet) []string {
+func (s KubectlDockerRegistrySecret) installArgs(fs *pflag.FlagSet) [][]string {
 	d, err := fs.GetBool("dry-run")
 	Fatal(err)
+	var iargs [][]string
+	var dargs []string
 	u := "***"
 	p := "***"
-	args := []string{"create", "secret", "docker-registry", s.Name}
-	if s.Namespace != "" {
-		args = append(args, "--namespace", s.Namespace)
-	}
-	args = append(args, "--docker-server", s.Registry)
+	dargs = append(dargs, "--docker-server", s.Registry)
 	if !d {
 		u = normalInputPrompt("Please enter a username")
 		p = sensitiveInputPrompt("Please enter a password")
 	}
-	args = append(args, "--docker-username", u, "--docker-password", string(p))
-	return args
+	dargs = append(dargs, "--docker-username", u, "--docker-password", string(p))
+	for _, ns := range s.Namespaces {
+		args := []string{"create", "secret", "docker-registry", s.Name}
+		if ns != "" && ns != "default" {
+			args = append(args, "--namespace", ns)
+		}
+		args = append(args, dargs...)
+		iargs = append(iargs, args)
+	}
+	return iargs
 }
 
 // uninstallArgs is used to build Kubectl delete CLI args given a FlagSet
@@ -273,23 +346,48 @@ func (m KubectlManifest) uninstallArgs(fs *pflag.FlagSet) []string {
 }
 
 // uninstallArgs is used to build Kubectl delete secret CLI args given a FlagSet
-func (s KubectlGenericSecret) uninstallArgs(fs *pflag.FlagSet) []string {
-	args := []string{"delete", "secret", s.Name}
-
-	if s.Namespace != "" {
-		args = append(args, "--namespace", s.Namespace)
+func (s KubectlGenericSecret) uninstallArgs(fs *pflag.FlagSet) [][]string {
+	var uargs [][]string
+	for _, ns := range s.Namespaces {
+		args := []string{"delete", "secret", s.Name}
+		if ns != "" && ns != "default" {
+			args = append(args, "--namespace", ns)
+		}
+		uargs = append(uargs, args)
 	}
-	return args
+	return uargs
 }
 
 // uninstallArgs is used to build Kubectl delete secret CLI args given a FlagSet
-func (s KubectlDockerRegistrySecret) uninstallArgs(fs *pflag.FlagSet) []string {
-	args := []string{"delete", "secret", s.Name}
-
-	if s.Namespace != "" {
-		args = append(args, "--namespace", s.Namespace)
+func (s KubectlDockerRegistrySecret) uninstallArgs(fs *pflag.FlagSet) [][]string {
+	var uargs [][]string
+	for _, ns := range s.Namespaces {
+		args := []string{"delete", "secret", s.Name}
+		if ns != "" && ns != "default" {
+			args = append(args, "--namespace", ns)
+		}
+		uargs = append(uargs, args)
 	}
-	return args
+	return uargs
+}
+
+// hash is used to facilitate storing KubectlGenericSecrets in a map
+func (s *KubectlGenericSecret) hash() string {
+	h := sha1.New()
+	h.Write([]byte(s.Name))
+	for _, l := range s.Literal {
+		h.Write([]byte(l.Key))
+		h.Write([]byte(l.Val))
+	}
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
+}
+
+// hash is used to facilitate storing KubectlDockerRegistrySecrets in a map
+func (s *KubectlDockerRegistrySecret) hash() string {
+	h := sha1.New()
+	h.Write([]byte(s.Name))
+	h.Write([]byte(s.Registry))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // kubectlCreateNamespace is used to execute a kubectl create namespace command

@@ -203,20 +203,24 @@ func (k *Konfig) unmarshalConfig() {
 		default:
 			Logger.Fatalf("Invalid time format %s\nValid time formats can be found here: https://pkg.go.dev/time#pkg-constants", logger.TimeFormat)
 		}
-		lvl := logger.Level
-		if lvl != "" {
-			switch lvl {
-			case "debug":
-				Logger.SetLevel(log.DebugLevel)
-			case "info":
-				Logger.SetLevel(log.InfoLevel)
-			case "warn":
-				Logger.SetLevel(log.WarnLevel)
-			case "error":
-				Logger.SetLevel(log.ErrorLevel)
-			default:
-				Logger.Fatalf("Invalid verbosity level: %s", lvl)
-			}
+	}
+	lvl := logger.Level
+	if lvl != "" {
+		switch lvl {
+		case "debug":
+			Logger.Debug("Setting debug log level")
+			Logger.SetLevel(log.DebugLevel)
+		case "info":
+			Logger.Debug("Setting info log level")
+			Logger.SetLevel(log.InfoLevel)
+		case "warn":
+			Logger.Debug("Setting warn log level")
+			Logger.SetLevel(log.WarnLevel)
+		case "error":
+			Logger.Debug("Setting error log level")
+			Logger.SetLevel(log.ErrorLevel)
+		default:
+			Logger.Fatalf("Invalid verbosity level: %s", lvl)
 		}
 	}
 	Logger.Debug("Config successfully unmarshalled!")
