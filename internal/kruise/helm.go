@@ -1,8 +1,11 @@
 package kruise
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/j2udev/kruise/internal/schema/latest"
@@ -241,6 +244,24 @@ func (r HelmRepository) uninstallArgs(fs *pflag.FlagSet) []string {
 		r.Name,
 	}
 	return args
+}
+
+// hash is used to facilitate storing HelmCharts in a map
+func (c HelmChart) hash() string {
+	h := sha1.New()
+	h.Write([]byte(c.RepoName))
+	h.Write([]byte(c.ChartName))
+	h.Write([]byte(c.ReleaseName))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
+}
+
+// hash is used to facilitate storing HelmRepositories in a map
+func (r HelmRepository) hash() string {
+	h := sha1.New()
+	h.Write([]byte(r.Name))
+	h.Write([]byte(r.Url))
+	h.Write([]byte(strconv.FormatBool(r.Private)))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // helmRepoUpdate is used to execute a Helm repo update command

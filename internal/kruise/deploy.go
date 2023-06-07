@@ -91,14 +91,14 @@ func getPassedInitInstallers(args []string) Installers {
 // getAllPassedInstallers gets all passed deployments given passed arguments
 func getAllPassedInstallers(args []string) Installers {
 	var installers Installers
-	charts := getPassedHelmCharts(args)
-	manifests := getPassedKubectlManifests(args)
 	repos := getPassedHelmRepos(args)
 	secrets := getPassedKubectlSecrets(args)
-	installers = append(installers, charts...)
-	installers = append(installers, manifests...)
+	charts := getPassedHelmCharts(args)
+	manifests := getPassedKubectlManifests(args)
 	installers = append(installers, repos...)
 	installers = append(installers, secrets...)
+	installers = append(installers, charts...)
+	installers = append(installers, manifests...)
 	return installers
 }
 
@@ -107,16 +107,16 @@ func getAllPassedInstallers(args []string) Installers {
 func getPassedKubectlManifests(args []string) Installers {
 	deps := getPassedDeployments(args)
 	var installers Installers
-	manifests := make(map[Installer]bool)
+	manifests := make(map[string]Installer)
 	for _, d := range deps {
 		kubectlDeployment := newKubectlDeployment(d.Kubectl)
 		man := kubectlDeployment.getKubectlManifests()
 		for _, m := range man {
-			manifests[m] = true
+			manifests[m.hash()] = m
 		}
 	}
-	for k := range manifests {
-		installers = append(installers, k)
+	for _, v := range manifests {
+		installers = append(installers, v)
 	}
 	return installers
 }
@@ -136,7 +136,9 @@ func getPassedKubectlSecrets(args []string) Installers {
 		for _, s := range genericSecrets {
 			hashedSecret := s.hash()
 			if val, ok := gsecrets[hashedSecret]; ok {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
+				if !contains[string](val.Namespaces, s.Namespace) {
+					val.Namespaces = append(val.Namespaces, s.Namespace)
+				}
 				gsecrets[hashedSecret] = val
 			} else {
 				gsecrets[hashedSecret] = s
@@ -145,7 +147,9 @@ func getPassedKubectlSecrets(args []string) Installers {
 		for _, s := range dockerRegistrySecrets {
 			hashedSecret := s.hash()
 			if val, ok := dsecrets[hashedSecret]; ok {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
+				if !contains[string](val.Namespaces, s.Namespace) {
+					val.Namespaces = append(val.Namespaces, s.Namespace)
+				}
 				dsecrets[hashedSecret] = val
 			} else {
 				dsecrets[hashedSecret] = s
@@ -165,16 +169,16 @@ func getPassedKubectlSecrets(args []string) Installers {
 func getPassedHelmCharts(args []string) Installers {
 	deps := getPassedDeployments(args)
 	var installers Installers
-	charts := make(map[Installer]bool)
+	charts := make(map[string]Installer)
 	for _, d := range deps {
 		helmDeployment := newHelmDeployment(d.Helm)
 		cha := helmDeployment.getHelmCharts()
 		for _, c := range cha {
-			charts[c] = true
+			charts[c.hash()] = c
 		}
 	}
-	for k := range charts {
-		installers = append(installers, k)
+	for _, v := range charts {
+		installers = append(installers, v)
 	}
 	return installers
 }
@@ -183,16 +187,16 @@ func getPassedHelmCharts(args []string) Installers {
 func getPassedHelmRepos(args []string) Installers {
 	deps := getPassedDeployments(args)
 	var installers Installers
-	repos := make(map[Installer]bool)
+	repos := make(map[string]Installer)
 	for _, d := range deps {
 		helmDeployment := newHelmDeployment(d.Helm)
 		repositories := helmDeployment.getHelmRepositories()
 		for _, r := range repositories {
-			repos[r] = true
+			repos[r.hash()] = r
 		}
 	}
-	for k := range repos {
-		installers = append(installers, k)
+	for _, v := range repos {
+		installers = append(installers, v)
 	}
 	return installers
 }

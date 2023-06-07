@@ -50,11 +50,34 @@ func Init(fs *pflag.FlagSet, installers ...Installer) {
 func Install(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
 	Fatal(err)
+	hasHelmDeployment := false
+	var pre Installers
+	var post Installers
+	for _, i := range installers {
+		switch d := i.(type) {
+		case HelmChart, KubectlManifest:
+			post = append(post, d)
+		case HelmRepository:
+			hasHelmDeployment = true
+			pre = append(pre, d)
+		case KubectlGenericSecret, KubectlDockerRegistrySecret:
+			pre = append(pre, d)
+		default:
+			Logger.Errorf("Invalid installer for the Install() function: %v", d)
+		}
+	}
 	switch {
 	case concurrent:
-		installc(fs, installers...)
+		// don't use concurrency for deployments that may prompt the user for input
+		installs(fs, pre...)
+		installc(fs, post...)
 	default:
 		installs(fs, installers...)
+	}
+	// if a Helm installer was in the list of the installers to initialize,
+	// perform a helm repo update at the end
+	if hasHelmDeployment {
+		helmRepoUpdate(fs)
 	}
 }
 

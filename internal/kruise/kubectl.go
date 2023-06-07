@@ -62,7 +62,12 @@ func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 	if !d {
 		checkKubectl()
 	}
-	Debug(kubectlCreateNamespace(d, s.Namespace))
+	for _, ns := range s.Namespaces {
+		err = kubectlCreateNamespace(d, ns)
+		if err != nil {
+			Logger.Debug(err)
+		}
+	}
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
 	switch len(s.Namespaces) {
@@ -90,7 +95,12 @@ func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
 	if !d {
 		checkKubectl()
 	}
-	Debug(kubectlCreateNamespace(d, s.Namespace))
+	for _, ns := range s.Namespaces {
+		err = kubectlCreateNamespace(d, ns)
+		if err != nil {
+			Logger.Debug(err)
+		}
+	}
 	// for now, just overwrite any existing secret
 	s.Uninstall(fs)
 	switch len(s.Namespaces) {
@@ -369,6 +379,15 @@ func (s KubectlDockerRegistrySecret) uninstallArgs(fs *pflag.FlagSet) [][]string
 		uargs = append(uargs, args)
 	}
 	return uargs
+}
+
+// hash is used to facilitate storing KubectlManifests in a map
+func (m *KubectlManifest) hash() string {
+	h := sha1.New()
+	for _, p := range m.Paths {
+		h.Write([]byte(p))
+	}
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // hash is used to facilitate storing KubectlGenericSecrets in a map
