@@ -47,18 +47,28 @@ type (
 // Install is used to execute a Kubectl apply command
 func (m KubectlManifest) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
-	Debug(kubectlCreateNamespace(d, m.Namespace))
-	Error(kubectlExecute(d, m.installArgs(fs)))
+	err = kubectlCreateNamespace(d, m.Namespace)
+	if err != nil {
+		Logger.Debug(err)
+	}
+	err = kubectlExecute(d, m.installArgs(fs))
+	if err != nil {
+		Logger.Error(err)
+	}
 }
 
 // Install is used to execute a Kubectl create generic secret command
 func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
@@ -91,7 +101,9 @@ func (s KubectlGenericSecret) Install(fs *pflag.FlagSet) {
 // Install is used to execute a Kubectl create docker-registry secret command
 func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
@@ -124,17 +136,24 @@ func (s KubectlDockerRegistrySecret) Install(fs *pflag.FlagSet) {
 // Uninstall is used to execute a Kubectl delete command
 func (m KubectlManifest) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
-	Warn(kubectlExecute(d, m.uninstallArgs(fs)))
+	err = kubectlExecute(d, m.uninstallArgs(fs))
+	if err != nil {
+		Logger.Warn(err)
+	}
 }
 
 // Uninstall is used to execute a Kubectl delete secret command
 func (s KubectlGenericSecret) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
@@ -151,7 +170,9 @@ func (s KubectlGenericSecret) Uninstall(fs *pflag.FlagSet) {
 // Uninstall is used to execute a Kubectl delete secret command
 func (s KubectlDockerRegistrySecret) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkKubectl()
 	}
@@ -295,7 +316,9 @@ func (m KubectlManifest) installArgs(fs *pflag.FlagSet) []string {
 // FlagSet
 func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) [][]string {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	var iargs [][]string
 	var largs []string
 	v := "***"
@@ -324,7 +347,9 @@ func (s KubectlGenericSecret) installArgs(fs *pflag.FlagSet) [][]string {
 // given a FlagSet
 func (s KubectlDockerRegistrySecret) installArgs(fs *pflag.FlagSet) [][]string {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	var iargs [][]string
 	var dargs []string
 	u := "***"
@@ -444,5 +469,7 @@ func kubectlExecute(dry bool, args []string) error {
 // checkKubectl is used to determine if the user has the Kubectl CLI installed
 func checkKubectl() {
 	err := exec.Command("kubectl").Run()
-	Fatalf(err, "Kubectl does not appear to be installed")
+	if err != nil {
+		Logger.Fatal(err)
+	}
 }

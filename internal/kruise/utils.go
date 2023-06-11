@@ -55,7 +55,9 @@ func captureStdout(f func()) string {
 	os.Stdout = old
 	var buf bytes.Buffer
 	_, err := io.Copy(&buf, r)
-	Error(err)
+	if err != nil {
+		Logger.Error(err)
+	}
 	return buf.String()
 }
 

@@ -16,6 +16,8 @@ func sensitiveInputPrompt(p string) string {
 
 func inputPrompt(p string, mode textinput.EchoMode) string {
 	val, err := prompt.New().Ask(p).Input("", input.WithEchoMode(mode))
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	return val
 }

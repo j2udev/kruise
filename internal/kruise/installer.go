@@ -49,7 +49,9 @@ func Init(fs *pflag.FlagSet, installers ...Installer) {
 // Install invokes the Install function for all Installers passed
 func Install(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	hasHelmDeployment := false
 	var pre Installers
 	var post Installers
@@ -84,7 +86,9 @@ func Install(fs *pflag.FlagSet, installers ...Installer) {
 // Uninstall invokes the Uninstall function for all Installers passed
 func Uninstall(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	switch {
 	case concurrent:
 		uninstallc(fs, installers...)

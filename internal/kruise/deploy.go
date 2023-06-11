@@ -22,7 +22,9 @@ type (
 // FlagSet to the Uninstall function
 func Deploy(fs *pflag.FlagSet, args []string) {
 	init, err := fs.GetBool("init")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	d := getPassedInstallers(args)
 	if init {
 		i := getPassedInitInstallers(args)

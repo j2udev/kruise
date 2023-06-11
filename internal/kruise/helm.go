@@ -31,16 +31,22 @@ type (
 // Install is used to execute a Helm install command
 func (c HelmChart) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkHelm()
 	}
 	err = helmExecute(d, c.installArgs(fs))
 	if err != nil {
 		if strings.Contains(err.Error(), "deprecated") {
-			Warn(err)
+			if err != nil {
+				Logger.Warn(err)
+			}
 		} else {
-			Error(err)
+			if err != nil {
+				Logger.Error(err)
+			}
 		}
 	}
 }
@@ -48,31 +54,46 @@ func (c HelmChart) Install(fs *pflag.FlagSet) {
 // Install is used to execute a Helm repo add command
 func (r HelmRepository) Install(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkHelm()
 	}
-	Error(helmExecute(d, r.installArgs(fs)))
+	err = helmExecute(d, r.installArgs(fs))
+	if err != nil {
+		Logger.Error(err)
+	}
 }
 
 // Uninstall is used to execute a Helm uninstall command
 func (c HelmChart) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkHelm()
 	}
-	Warn(helmExecute(d, c.uninstallArgs(fs)))
+	err = helmExecute(d, c.uninstallArgs(fs))
+	if err != nil {
+		Logger.Warn(err)
+	}
 }
 
 // Uninstall is used to execute a Helm repo remove command
 func (r HelmRepository) Uninstall(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if !d {
 		checkHelm()
 	}
-	Error(helmExecute(d, r.uninstallArgs(fs)))
+	err = helmExecute(d, r.uninstallArgs(fs))
+	if err != nil {
+		Logger.Error(err)
+	}
 }
 
 // GetPriority is used to get the priority of the installer
@@ -207,7 +228,9 @@ func (c HelmChart) uninstallArgs(fs *pflag.FlagSet) []string {
 // installArgs is used to build Helm repo add CLI args given a FlagSet
 func (r HelmRepository) installArgs(fs *pflag.FlagSet) []string {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	if r.Name == "" {
 		Logger.Fatal("You must specify a Helm repository name")
 	}
@@ -267,8 +290,13 @@ func (r HelmRepository) hash() string {
 // helmRepoUpdate is used to execute a Helm repo update command
 func helmRepoUpdate(fs *pflag.FlagSet) {
 	d, err := fs.GetBool("dry-run")
-	Fatal(err)
-	Warn(helmExecute(d, []string{"repo", "update"}))
+	if err != nil {
+		Logger.Fatal(err)
+	}
+	err = helmExecute(d, []string{"repo", "update"})
+	if err != nil {
+		Logger.Warn(err)
+	}
 }
 
 // helmExecute is a helper function for executing a Helm command given a set of
@@ -284,5 +312,7 @@ func helmExecute(dry bool, args []string) error {
 // checkHelm is used to determine if the user has the Helm CLI installed
 func checkHelm() {
 	err := exec.Command("helm").Run()
-	Fatalf(err, "Helm does not appear to be installed")
+	if err != nil {
+		Logger.Fatal(err)
+	}
 }
