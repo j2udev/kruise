@@ -275,6 +275,19 @@ func (c HelmChart) hash() string {
 	h.Write([]byte(c.RepoName))
 	h.Write([]byte(c.ChartName))
 	h.Write([]byte(c.ReleaseName))
+	h.Write([]byte(c.Version))
+	for _, v := range c.Values {
+		h.Write([]byte(v))
+	}
+	for _, v := range c.SetValues {
+		h.Write([]byte(v))
+	}
+	for _, v := range c.InstallArgs {
+		h.Write([]byte(v))
+	}
+	for _, v := range c.UninstallArgs {
+		h.Write([]byte(v))
+	}
 	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 

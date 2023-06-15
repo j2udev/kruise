@@ -11,11 +11,6 @@ type (
 	Deployment latest.Deployment
 	// Deployments is a slice of Deployment objects
 	Deployments []Deployment
-	// k8sRef is a helper struct used in deduplicating k8s resources
-	k8sRef struct {
-		Name      string
-		Namespace string
-	}
 )
 
 // Deploy determines passed deployments from args and passes the cobra Cmd
@@ -93,28 +88,28 @@ func getPassedInitInstallers(args []string) Installers {
 // getAllPassedInstallers gets all passed deployments given passed arguments
 func getAllPassedInstallers(args []string) Installers {
 	var installers Installers
-	repos := getPassedHelmRepos(args)
-	secrets := getPassedKubectlSecrets(args)
-	charts := getPassedHelmCharts(args)
-	manifests := getPassedKubectlManifests(args)
-	installers = append(installers, repos...)
-	installers = append(installers, secrets...)
-	installers = append(installers, charts...)
-	installers = append(installers, manifests...)
+	deps := getPassedDeployments(args)
+	for _, d := range deps {
+		installers = append(installers, getPassedHelmRepos(d)...)
+		installers = append(installers, getPassedKubectlSecrets(d)...)
+		installers = append(installers, getPassedHelmCharts(d)...)
+		installers = append(installers, getPassedKubectlManifests(d)...)
+	}
 	return installers
 }
 
 // getPassedKubectlManifests gets all passed KubectlManifests given passed
 // arguments
-func getPassedKubectlManifests(args []string) Installers {
-	deps := getPassedDeployments(args)
+func getPassedKubectlManifests(deployment Deployment) Installers {
 	var installers Installers
-	manifests := make(map[string]Installer)
-	for _, d := range deps {
-		kubectlDeployment := newKubectlDeployment(d.Kubectl)
-		man := kubectlDeployment.getKubectlManifests()
-		for _, m := range man {
-			manifests[m.hash()] = m
+	manifestMap := make(map[string]Installer)
+	var manifests KubectlManifests
+	kubectlDeployment := newKubectlDeployment(deployment.Kubectl)
+	man := kubectlDeployment.getKubectlManifests()
+	for _, m := range man {
+		if _, ok := manifestMap[m.hash()]; !ok {
+			manifestMap[m.hash()] = m
+			manifests = append(manifests, m)
 		}
 	}
 	for _, v := range manifests {
@@ -126,36 +121,33 @@ func getPassedKubectlManifests(args []string) Installers {
 // getPassedKubectlSecrets gets all passed KubectlSecrets given passed arguments
 // and consolidates the same secrets that are being created across multiple
 // namespaces
-func getPassedKubectlSecrets(args []string) Installers {
-	deps := getPassedDeployments(args)
+func getPassedKubectlSecrets(deployment Deployment) Installers {
 	var installers Installers
 	gsecrets := make(map[string]KubectlGenericSecret)
 	dsecrets := make(map[string]KubectlDockerRegistrySecret)
-	for _, d := range deps {
-		kubectlDeployment := newKubectlDeployment(d.Kubectl)
-		genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
-		dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
-		for _, s := range genericSecrets {
-			hashedSecret := s.hash()
-			if val, ok := gsecrets[hashedSecret]; ok {
-				if !contains[string](val.Namespaces, s.Namespace) {
-					val.Namespaces = append(val.Namespaces, s.Namespace)
-				}
-				gsecrets[hashedSecret] = val
-			} else {
-				gsecrets[hashedSecret] = s
+	kubectlDeployment := newKubectlDeployment(deployment.Kubectl)
+	genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
+	dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
+	for _, s := range genericSecrets {
+		hashedSecret := s.hash()
+		if val, ok := gsecrets[hashedSecret]; ok {
+			if !contains[string](val.Namespaces, s.Namespace) {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
 			}
+			gsecrets[hashedSecret] = val
+		} else {
+			gsecrets[hashedSecret] = s
 		}
-		for _, s := range dockerRegistrySecrets {
-			hashedSecret := s.hash()
-			if val, ok := dsecrets[hashedSecret]; ok {
-				if !contains[string](val.Namespaces, s.Namespace) {
-					val.Namespaces = append(val.Namespaces, s.Namespace)
-				}
-				dsecrets[hashedSecret] = val
-			} else {
-				dsecrets[hashedSecret] = s
+	}
+	for _, s := range dockerRegistrySecrets {
+		hashedSecret := s.hash()
+		if val, ok := dsecrets[hashedSecret]; ok {
+			if !contains[string](val.Namespaces, s.Namespace) {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
 			}
+			dsecrets[hashedSecret] = val
+		} else {
+			dsecrets[hashedSecret] = s
 		}
 	}
 	for _, v := range gsecrets {
@@ -168,15 +160,16 @@ func getPassedKubectlSecrets(args []string) Installers {
 }
 
 // getPassedHelmCharts gets all passed HelmCharts given passed arguments
-func getPassedHelmCharts(args []string) Installers {
-	deps := getPassedDeployments(args)
+func getPassedHelmCharts(deployment Deployment) Installers {
 	var installers Installers
-	charts := make(map[string]Installer)
-	for _, d := range deps {
-		helmDeployment := newHelmDeployment(d.Helm)
-		cha := helmDeployment.getHelmCharts()
-		for _, c := range cha {
-			charts[c.hash()] = c
+	chartMap := make(map[string]Installer)
+	var charts HelmCharts
+	helmDeployment := newHelmDeployment(deployment.Helm)
+	cha := helmDeployment.getHelmCharts()
+	for _, c := range cha {
+		if _, ok := chartMap[c.hash()]; !ok {
+			chartMap[c.hash()] = c
+			charts = append(charts, c)
 		}
 	}
 	for _, v := range charts {
@@ -186,15 +179,16 @@ func getPassedHelmCharts(args []string) Installers {
 }
 
 // getPassedHelmRepos gets all passed HelmRepositories given passed arguments
-func getPassedHelmRepos(args []string) Installers {
-	deps := getPassedDeployments(args)
+func getPassedHelmRepos(deployment Deployment) Installers {
 	var installers Installers
-	repos := make(map[string]Installer)
-	for _, d := range deps {
-		helmDeployment := newHelmDeployment(d.Helm)
-		repositories := helmDeployment.getHelmRepositories()
-		for _, r := range repositories {
-			repos[r.hash()] = r
+	repoMap := make(map[string]Installer)
+	var repos HelmRepositories
+	helmDeployment := newHelmDeployment(deployment.Helm)
+	repositories := helmDeployment.getHelmRepositories()
+	for _, r := range repositories {
+		if _, ok := repoMap[r.hash()]; !ok {
+			repoMap[r.hash()] = r
+			repos = append(repos, r)
 		}
 	}
 	for _, v := range repos {

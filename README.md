@@ -9,50 +9,48 @@ meant to simplify the deployment of... things.
 
 > Things?
 
-Yeah. Things. You know, Kubernetes things. Like Helm charts and k8s manifests.
-
-> Aren't there already lots of tools like this?
-
-Well, "lots" is subjective, but I suppose you're not wrong. Indeed there are
-other tools that do something similar. Wonderful tools like
-[Tilt](https://tilt.dev/) and [Skaffold](https://skaffold.dev/) exist that aim
-to streamline the devloop when working with Kubernetes.
-
-Kruise is different in that instead of running a command that executes what a
-manifest specifies (like a
-[skaffold.yaml](https://skaffold.dev/docs/references/yaml/)), it gives the user
-the choice to execute individual/multiple things defined by the manifest.
-
-If a `skaffold.yaml` specifies that it _should_ deploy x, y, and z, running
-`skaffold deploy` will do just that. If you want to do some subset of that
-deployment, you'd need to make a separate `skaffold.yaml` (or use their
-[profiles](https://skaffold.dev/docs/environment/profiles/), but YMMV). If a
-`kruise.yaml` specifies that it _can_ deploy x, y, and z, it will present those
-options to the user when they execute the deploy command. This means you can
-`kruise deploy x z` or `kruise deploy y` or `kruise deploy x z y` or any
-combination of those options.
+Yeah. Things. You know, Kubernetes things. Like Helm charts/repositories and
+Kubernetes manifests. It even has extra utilities for creating k8s secrets with
+masked prompts as opposed to having sensitive information under source control
+or in your shell history.
 
 > Ok, so how do I work this thing?
 
 Without a manifest to drive the CLI, Kruise is just an empty black box. So the
-first thing you'll need to do is define a `kruise.yaml` file. In the
-[examples folder](examples) you'll find, you guessed it, examples! The manifests
-you'll find in the examples folder should help with crafting your own
-`kruise.yaml`.
+first thing you'll need to do is define a `kruise.json/toml/yaml` file. The
+manifests you'll find in the [examples folder](examples) should help with
+crafting your own kruise configuration file.
 
-By default, Kruise will check three locations for the existence of a
-`kruise.yaml`. In order of priority, first, it will check your current working
-directory. Second it will check `$XDG_CONFIG_HOME/kruise/kruise.yaml`. If the
-`XDG_CONFIG_HOME` environment variable is not set The default location on Mac is
+By default, Kruise will check the following locations for config, in this order:
+
+-   `$PWD/kruise.json/toml/yaml`
+
+-   `$XDG_CONFIG_HOME/kruise/kruise.json/toml/yaml`
+
+-   `$PWD/.kruise.json/toml/yaml`
+
+-   `$XDG_CONFIG_HOME/.kruise.json/toml/yaml`
+
+-   `$HOME/.kruise.json/toml/yaml`
+
+`$PWD` is your current working directory. If the `XDG_CONFIG_HOME` environment
+variable is not set The default location on Mac is
 `~/Library/Application Support`, on Unix is `~/.config`, and on Windows is
 `LocalAppData` which falls back to `%LOCALAPPDATA%`. Finally, `$HOME` will be
-checked for the existence of a `.kruise.yaml` file.
+checked for the existence of a `.kruise.json/toml/yaml` file.
 
 The path to your config can be overridden with the `KRUISE_CONFIG` environment
 variable. You can set this in your bashrc, zshrc, etc for a persistent override,
 or you can set it inline for quickly targetting different configuration files.
+You can also set this to the URL of a raw kruise manifest you have under source
+control.
 
-```bash
+```sg
+export KRUISE_CONFIG=https://raw.githubusercontent.com/j2udev/kruise/master/examples/observability/kruise.yaml
+kruise deploy -h
+```
+
+```sg
 # absolute path to custom config
 KRUISE_CONFIG=/path/to/foo.yaml kruise deploy -h
 # relative path to custom config
@@ -65,19 +63,26 @@ Check out the [Installation](#installation) section below!
 
 > How about a TLDR?
 
-Get Go 1.18+, copy an example from the [examples](examples) folder as a starting
-point, and start tinkering with Kruise right away!
+Install Kruise and use the examples as inspiration for crafting your own k8s
+deployment CLI.
 
-```bash
+```sg
 cp -r examples/observability /somewhere/else/observability
 cd /somewhere/else/observability
 kruise deploy --help
 ```
 
+or
+
+```sh
+export KRUISE_CONFIG=https://raw.githubusercontent.com/j2udev/kruise/master/examples/observability/kruise.yaml
+kruise deploy -h
+```
+
 ## Installation
 
-Kruise is still very young so, for now, install from source. Kruise uses
-generics so you'll need at least Go 1.18.
+Kruise is still very young so, for now, install from source. You'll need at
+least Go 1.18.
 
 [For your convenience](https://go.dev/dl/)
 
@@ -120,6 +125,7 @@ deploy:
               repositories:
                   - name: istio
                     url: https://istio-release.storage.googleapis.com/charts
+                    init: true
               charts:
                   - priority: 1
                     chartName: base
@@ -160,9 +166,9 @@ option to deploy to their cluster without needing to know that it requires
 adding a Helm repository, installing three Helm charts in a particular order,
 and kubectl applying a Gateway custom resource.
 
-```txt
+```text
 ╰─❯ kruise deploy -h
-Using config file: /path/to/kruise.yaml
+INFO Using config file: /path/to/kruise.yaml
 Usage:
   kruise deploy [flags] [options]
 
@@ -176,10 +182,10 @@ Flags:
   -c, --concurrent        deploy the arguments concurrently (deploys in order based on the 'priority' of each deployment passed)
   -h, --help              help for deploy
   -i, --init              add Helm repositories and create Kubernetes secrets for the specified options
-  -d, --dry-run   output the command being performed under the hood
+  -d, --dry-run           output the command being performed under the hood
 
 Global Flags:
-  -V, --verbosity string   specify the log level to be used (trace, debug, info, warn, error) (default "error")
+  -V, --verbosity string   specify the log level to be used (debug, info, warn, error) (default "warn")
 ```
 
 ## Transparent Abstractions
@@ -196,12 +202,12 @@ they can simply run:
 
 ```txt
 ╰─❯ kruise deploy istio -id
-Using config file: /path/to/kruise.yaml
+INFO Using config file: /path/to/kruise.yaml
 /usr/local/bin/helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
 /usr/local/bin/helm repo update
 /usr/local/bin/helm upgrade --install istio-base istio/base --namespace istio-system --version 1.14.1 -f values/istio-base-values.yaml --create-namespace
 /usr/local/bin/helm upgrade --install istiod istio/istiod --namespace istio-system --version 1.14.1 -f values/istiod-values.yaml --create-namespace
-/usr/local/bin/helm upgrade --install istio-ingressgateway istio/gateway --namespace istio-system --version 1.14.1 -f values/istio-gateway-values.yaml --set service.externalIPs[0]=<redacted> --create-namespace
+/usr/local/bin/helm upgrade --install istio-ingressgateway istio/gateway --namespace istio-system --version 1.14.1 -f values/istio-gateway-values.yaml --set service.externalIPs[0]=CHANGE_ME --create-namespace
 /usr/local/bin/kubectl create namespace istio-system
 /usr/local/bin/kubectl apply --namespace istio-system -f manifests/istio-gateway.yaml
 ```
@@ -211,82 +217,18 @@ Using config file: /path/to/kruise.yaml
 Preparing a new deployment can often require a few initialization steps. Whether
 that's creating a secret, adding a Helm repository, etc. Often these steps don't
 need to be executed in subsequent deployments so we wouldn't want to execute
-them everytime. Instead, we can opt into them with the `--init` flag. Applying
-this flag will determine if any of the passed arguments need to have k8s secrets
-created or Helm repositories added. Kruise will prompt you for credentials if
-needed (if k8s secret(s) or `private` Helm repositories are associated with the
-deployment used).
+them everytime. Instead, we can opt into them with the `--init` flag. If the
+`init` property is added to an item that makes up a deployment in the
+`kruise.yaml`, that item will only be deployed if the `--init` flag is passed on
+the command line.
 
-The following manifest will result in the user being prompted for credentials to
-authenticate against the specified container registry. It will also prompt the
-user to enter credentials for the private Helm repository.
-
-```yaml
-apiVersion: v1alpha1
-kind: Config
-deploy:
-    deployments:
-        - name: custom-deployment1
-          aliases:
-              - cd1
-          description:
-              deploy: cd1 deploy description
-              delete: cd1 delete description
-          kubectl:
-              secrets:
-                  - type: docker-registry
-                    name: image-pull-secret
-                    namespace: default
-                    registry: private-registry.com
-    helm:
-        repositories:
-            - name: private
-              url: https://private.helm.repo
-              private: true # Setting private to true will prompt the user for credentials when the --init flag is used
-```
-
-...
-
-```txt
-╰─❯ kruise deploy cd1 -i
-Using config file: /workspaces/kruise/examples/custom/kruise.yaml
-Please enter your username for the private-registry.com container registry: foo
-Please enter your password for the private-registry.com container registry: ***
-✔ Please confirm your password: █
-```
-
-...
-
-```txt
-╰─❯ kruise deploy cd1 -i
-Using config file: /workspaces/kruise/examples/custom/kruise.yaml
-Please enter your username for the private-registry.com container registry: foo
-Please enter your password for the private-registry.com container registry: ***
-Please confirm your password: ***
-secret/custom-image-pull-secret created
-Please enter your username for the private Helm repository: foo
-Please enter your password for the private Helm repository: ***
-✔ Please confirm your password: █
-```
-
-...
-
-```txt
-╰─❯ kruise deploy cd1 -i
-Using config file: /workspaces/kruise/examples/custom/kruise.yaml
-Please enter your username for the private-registry.com container registry: foo
-Please enter your password for the private-registry.com container registry: ***
-Please confirm your password: ***
-secret/custom-image-pull-secret created
-Please enter your username for the private Helm repository: foo
-Please enter your password for the private Helm repository: ***
-Please confirm your password: ***
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "private" chart repository
-Update Complete. ⎈Happy Helming!⎈
-```
-
-This can help keep credentials out of source control and out your shell history!
+Some common items that make sense to be deployed only during initialization
+might be Helm repositories and Kubectl secrets or namespaces. Kruise will prompt
+you for any sensitive information associated with secrets and private Helm
+repositories. This can help keep credentials out of source control and out of
+your shell history! Due to the prompt, secrets and Helm repositories won't be
+deployed concurrently if the `--concurrent` flag is used. Check out the
+[secrets example](examples/secrets/kruise.yaml).
 
 ## Priority Deployments
 
@@ -301,8 +243,8 @@ let's say deployment A needs to apply a CustomResource that's defined in
 deployment B. In this case, you would want to specify in the `kruise.yaml` that
 the deployment responsible for creating the CustomResourceDefinition in B has a
 higher priority than the application of that CustomResource in A. This can be
-achieved with the `priority` field, which can be applied to each type of
-installer in Kruise.
+achieved with the `priority` field, which can be applied to any deployment item
+(other than Kubectl secrets or Helm repositories) in the `kruise.yaml`.
 
 Let's revisit the Istio example from earlier:
 
@@ -325,6 +267,7 @@ deploy:
               repositories:
                   - name: istio
                     url: https://istio-release.storage.googleapis.com/charts
+                    init: true
               charts:
                   - priority: 1
                     chartName: base
@@ -476,8 +419,8 @@ deploy:
         - name: prometheus-operator ...
 ```
 
-Each profile object has an `items` parameter. Each item in that list represents
-a key in the `deployments` map.
+Each profile object has an `items` parameter. Each item in that list corresponds
+to a name in the `deployments` list.
 
 The help text for the above example is shown below:
 
@@ -550,17 +493,17 @@ Using config file: /workspaces/kruise/examples/observability/kruise.yaml
 /usr/local/bin/helm repo add jaegertracing https://jaegertracing.github.io/helm-charts --force-update
 /usr/local/bin/helm repo add grafana https://grafana.github.io/helm-charts --force-update
 /usr/local/bin/helm repo update
-INFO[0000] Priority 1 waitgroup starting
+INFO Priority 1 waitgroup starting
 /usr/local/bin/helm upgrade --install istiod istio/istiod --namespace istio-system --version 1.14.1 -f values/istiod-values.yaml --create-namespace
 /usr/local/bin/helm upgrade --install istio-base istio/base --namespace istio-system --version 1.14.1 -f values/istio-base-values.yaml --create-namespace
-INFO[0000] Priority 2 waitgroup starting
+INFO Priority 2 waitgroup starting
 /usr/local/bin/kubectl create namespace monitoring
 /usr/local/bin/kubectl apply --namespace monitoring -f manifests/grafana-virtual-service.yaml
 /usr/local/bin/kubectl create namespace istio-system
 /usr/local/bin/helm upgrade --install istio-ingressgateway istio/gateway --namespace istio-system --version 1.14.1 -f values/istio-gateway-values.yaml --set service.externalIPs[0]=CHANGE_ME --create-namespace
 /usr/local/bin/kubectl apply --namespace istio-system -f manifests/istio-gateway.yaml
 /usr/local/bin/helm upgrade --install prometheus-operator prometheus-community/kube-prometheus-stack --namespace monitoring --version 36.0.2 -f values/prometheus-operator-values.yaml --create-namespace
-INFO[0000] Priority 3 waitgroup starting
+INFO Priority 3 waitgroup starting
 /usr/local/bin/helm upgrade --install loki grafana/loki-stack --namespace logging --version 2.6.5 --create-namespace
 /usr/local/bin/kubectl create namespace tracing
 /usr/local/bin/kubectl apply --namespace tracing -f manifests/jaeger-virtual-service.yaml
