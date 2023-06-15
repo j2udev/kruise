@@ -14,12 +14,13 @@ type (
 		Install(fs *pflag.FlagSet)
 		Uninstall(fs *pflag.FlagSet)
 		GetPriority() int
+		IsInit() bool
 	}
 	// Installers represents a slice of Installer objects
 	Installers []Installer
 	// KruiseInstaller represents a union type of Kruise Installer implementations
 	KruiseInstaller interface {
-		HelmRepository | HelmChart | KubectlSecret | KubectlManifest
+		HelmRepository | HelmChart | KubectlGenericSecret | KubectlDockerRegistrySecret | KubectlManifest
 	}
 )
 
@@ -27,19 +28,13 @@ type (
 // installed during initialization (i.e. HelmRepositories and KubectlSecrets)
 func Init(fs *pflag.FlagSet, installers ...Installer) {
 	hasHelmDeployment := false
-	u := make(map[string]Installer)
 	for _, i := range installers {
 		switch d := i.(type) {
-		case KubectlSecret:
-			// TODO: deduplicate the creation of secrets
+		case HelmChart, KubectlManifest, KubectlDockerRegistrySecret, KubectlGenericSecret:
 			i.Install(fs)
 		case HelmRepository:
 			hasHelmDeployment = true
-			repo := d.Url
-			if _, ok := u[repo]; !ok {
-				u[repo] = i
-				i.Install(fs)
-			}
+			i.Install(fs)
 		default:
 			Logger.Errorf("Invalid installer for the Init() function: %v", d)
 		}
@@ -54,19 +49,46 @@ func Init(fs *pflag.FlagSet, installers ...Installer) {
 // Install invokes the Install function for all Installers passed
 func Install(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
+	hasHelmDeployment := false
+	var pre Installers
+	var post Installers
+	for _, i := range installers {
+		switch d := i.(type) {
+		case HelmChart, KubectlManifest:
+			post = append(post, d)
+		case HelmRepository:
+			hasHelmDeployment = true
+			pre = append(pre, d)
+		case KubectlGenericSecret, KubectlDockerRegistrySecret:
+			pre = append(pre, d)
+		default:
+			Logger.Errorf("Invalid installer for the Install() function: %v", d)
+		}
+	}
 	switch {
 	case concurrent:
-		installc(fs, installers...)
+		// don't use concurrency for deployments that may prompt the user for input
+		installs(fs, pre...)
+		installc(fs, post...)
 	default:
 		installs(fs, installers...)
+	}
+	// if a Helm installer was in the list of the installers to initialize,
+	// perform a helm repo update at the end
+	if hasHelmDeployment {
+		helmRepoUpdate(fs)
 	}
 }
 
 // Uninstall invokes the Uninstall function for all Installers passed
 func Uninstall(fs *pflag.FlagSet, installers ...Installer) {
 	concurrent, err := fs.GetBool("concurrent")
-	Fatal(err)
+	if err != nil {
+		Logger.Fatal(err)
+	}
 	switch {
 	case concurrent:
 		uninstallc(fs, installers...)
@@ -126,8 +148,8 @@ func uninstalls(fs *pflag.FlagSet, installers ...Installer) {
 	}
 }
 
-// uninstallc is used to concurrently invoke the uninstall functions of the given
-// Installers
+// uninstallc is used to concurrently invoke the uninstall functions of the
+// given Installers
 //
 // Waitgroups are contructed based on Installer Priority where each batch of
 // prioritized deployments are executed concurrently

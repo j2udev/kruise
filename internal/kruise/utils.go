@@ -55,7 +55,9 @@ func captureStdout(f func()) string {
 	os.Stdout = old
 	var buf bytes.Buffer
 	_, err := io.Copy(&buf, r)
-	Error(err)
+	if err != nil {
+		Logger.Error(err)
+	}
 	return buf.String()
 }
 
@@ -63,7 +65,7 @@ func captureStdout(f func()) string {
 // underlying commands used by Deploy
 func trimDeployPrefix(actual string) string {
 	actuals := strings.Split(actual, "\n")
-	reg := regexp.MustCompile(`^\/.+(helm|kubectl)`)
+	reg := regexp.MustCompile(`^\/.+(helm |kubectl )`)
 	for i, a := range actuals {
 		actuals[i] = reg.ReplaceAllString(a, "${1}")
 	}
@@ -73,5 +75,6 @@ func trimDeployPrefix(actual string) string {
 // trimDeployStdoutPrefix is used to trim the absolute path prefix from the
 // stdout of the given function
 func trimDeployStdoutPrefix(f func()) string {
-	return trimDeployPrefix(captureStdout(f))
+	out := captureStdout((f))
+	return trimDeployPrefix(out)
 }

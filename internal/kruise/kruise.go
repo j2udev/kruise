@@ -32,5 +32,6 @@ func InitializeConfig() {
 // InitializeLogger is used to initialize the Kruise logger
 func InitializeLogger() {
 	Logger = log.New(os.Stderr)
+	// Logger.SetReportCaller(true)
 	Logger.SetLevel(log.WarnLevel)
 }

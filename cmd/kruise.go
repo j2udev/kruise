@@ -27,7 +27,9 @@ func persistentPreRun(cmd *cobra.Command, args []string) {
 func setLogLevel(cmd *cobra.Command) {
 	logger := kruise.Logger
 	lvl, err := cmd.Flags().GetString("verbosity")
-	kruise.Error(err)
+	if err != nil {
+		logger.Error(err)
+	}
 	switch lvl {
 	case "debug":
 		logger.SetLevel(log.DebugLevel)

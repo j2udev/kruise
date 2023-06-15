@@ -3,7 +3,7 @@ kind: Config
 logger:
   level: info
   enableCaller: false
-  enableTimestamp: true
+  enableTimestamp: false
   timeFormat: timeonly
 deploy:
   profiles:
@@ -46,6 +46,7 @@ deploy:
       helm:
         repositories:
         - name: istio
+          init: true
           url: https://istio-release.storage.googleapis.com/charts
         charts:
         - priority: 1
@@ -93,6 +94,7 @@ deploy:
       helm:
         repositories:
         - name: jaegertracing
+          init: true
           url: https://jaegertracing.github.io/helm-charts
         charts:
         - priority: 3
@@ -112,6 +114,7 @@ deploy:
       helm:
         repositories:
         - name: grafana
+          init: true
           url: https://grafana.github.io/helm-charts
         charts:
         - priority: 3
@@ -137,6 +140,7 @@ deploy:
       helm:
         repositories:
         - name: prometheus-community
+          init: true
           url: https://prometheus-community.github.io/helm-charts
         charts:
         - priority: 2

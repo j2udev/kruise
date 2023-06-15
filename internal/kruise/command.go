@@ -84,7 +84,10 @@ func (c Command) Execute() error {
 		stderr, _ := cmd.StderrPipe()
 		stdout, _ := cmd.StdoutPipe()
 		if err := cmd.Start(); err != nil {
-			Fatal(cmd.Wait())
+			err = cmd.Wait()
+			if err != nil {
+				Logger.Fatal(err)
+			}
 			return err
 		}
 		cmdErr, _ := io.ReadAll(stderr)
@@ -95,7 +98,10 @@ func (c Command) Execute() error {
 		if c.StdOut {
 			fmt.Printf("%s", cmdOut)
 		}
-		Fatal(cmd.Wait())
+		err := cmd.Wait()
+		if err != nil {
+			Logger.Fatal(err)
+		}
 	}
 	return nil
 }
