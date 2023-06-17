@@ -18,10 +18,6 @@ type (
 	}
 	// Installers represents a slice of Installer objects
 	Installers []Installer
-	// KruiseInstaller represents a union type of Kruise Installer implementations
-	KruiseInstaller interface {
-		HelmRepository | HelmChart | KubectlGenericSecret | KubectlDockerRegistrySecret | KubectlManifest
-	}
 )
 
 // Init invokes the Install function for all Installers that should only be
@@ -197,12 +193,4 @@ func priorityMap(installers ...Installer) map[int]Installers {
 		}
 	}
 	return m
-}
-
-func toInstallers[T KruiseInstaller](t []T) Installers {
-	var installers Installers
-	for _, r := range t {
-		installers = append(installers, Installer(r))
-	}
-	return installers
 }

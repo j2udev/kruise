@@ -2,7 +2,7 @@ package latest
 
 import "github.com/j2udev/kruise/internal/schema/version"
 
-var Version = "v1alpha3"
+var Version = "v1alpha1"
 
 // NewKruiseConfig represents the schema of the Kruise manifest
 func NewKruiseConfig() version.IVersionedConfig {
