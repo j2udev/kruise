@@ -85,115 +85,70 @@ func getPassedInitInstallers(args []string) Installers {
 	return installers
 }
 
-// getAllPassedInstallers gets all passed deployments given passed arguments
+// getAllPassedInstallers gets all passed installers given passed arguments
 func getAllPassedInstallers(args []string) Installers {
-	var installers Installers
 	deps := getPassedDeployments(args)
-	for _, d := range deps {
-		installers = append(installers, getPassedHelmRepos(d)...)
-		installers = append(installers, getPassedKubectlSecrets(d)...)
-		installers = append(installers, getPassedHelmCharts(d)...)
-		installers = append(installers, getPassedKubectlManifests(d)...)
-	}
-	return installers
-}
-
-// getPassedKubectlManifests gets all passed KubectlManifests given passed
-// arguments
-func getPassedKubectlManifests(deployment Deployment) Installers {
 	var installers Installers
-	manifestMap := make(map[string]Installer)
-	var manifests KubectlManifests
-	kubectlDeployment := newKubectlDeployment(deployment.Kubectl)
-	man := kubectlDeployment.getKubectlManifests()
-	for _, m := range man {
-		if _, ok := manifestMap[m.hash()]; !ok {
-			manifestMap[m.hash()] = m
-			manifests = append(manifests, m)
-		}
-	}
-	for _, v := range manifests {
-		installers = append(installers, v)
-	}
-	return installers
-}
-
-// getPassedKubectlSecrets gets all passed KubectlSecrets given passed arguments
-// and consolidates the same secrets that are being created across multiple
-// namespaces
-func getPassedKubectlSecrets(deployment Deployment) Installers {
-	var installers Installers
-	gsecrets := make(map[string]KubectlGenericSecret)
-	dsecrets := make(map[string]KubectlDockerRegistrySecret)
-	kubectlDeployment := newKubectlDeployment(deployment.Kubectl)
-	genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
-	dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
-	for _, s := range genericSecrets {
-		hashedSecret := s.hash()
-		if val, ok := gsecrets[hashedSecret]; ok {
-			if !contains[string](val.Namespaces, s.Namespace) {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
-			}
-			gsecrets[hashedSecret] = val
-		} else {
-			gsecrets[hashedSecret] = s
-		}
-	}
-	for _, s := range dockerRegistrySecrets {
-		hashedSecret := s.hash()
-		if val, ok := dsecrets[hashedSecret]; ok {
-			if !contains[string](val.Namespaces, s.Namespace) {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
-			}
-			dsecrets[hashedSecret] = val
-		} else {
-			dsecrets[hashedSecret] = s
-		}
-	}
-	for _, v := range gsecrets {
-		installers = append(installers, v)
-	}
-	for _, v := range dsecrets {
-		installers = append(installers, v)
-	}
-	return installers
-}
-
-// getPassedHelmCharts gets all passed HelmCharts given passed arguments
-func getPassedHelmCharts(deployment Deployment) Installers {
-	var installers Installers
-	chartMap := make(map[string]Installer)
-	var charts HelmCharts
-	helmDeployment := newHelmDeployment(deployment.Helm)
-	cha := helmDeployment.getHelmCharts()
-	for _, c := range cha {
-		if _, ok := chartMap[c.hash()]; !ok {
-			chartMap[c.hash()] = c
-			charts = append(charts, c)
-		}
-	}
-	for _, v := range charts {
-		installers = append(installers, v)
-	}
-	return installers
-}
-
-// getPassedHelmRepos gets all passed HelmRepositories given passed arguments
-func getPassedHelmRepos(deployment Deployment) Installers {
-	var installers Installers
+	var preInstallers Installers
+	var postInstallers Installers
 	repoMap := make(map[string]Installer)
-	var repos HelmRepositories
-	helmDeployment := newHelmDeployment(deployment.Helm)
-	repositories := helmDeployment.getHelmRepositories()
-	for _, r := range repositories {
-		if _, ok := repoMap[r.hash()]; !ok {
-			repoMap[r.hash()] = r
-			repos = append(repos, r)
+	gsecretMap := make(map[string]KubectlGenericSecret)
+	dsecretMap := make(map[string]KubectlDockerRegistrySecret)
+	chartMap := make(map[string]Installer)
+	manifestMap := make(map[string]Installer)
+	for _, d := range deps {
+		helmDeployment := newHelmDeployment(d.Helm)
+		kubectlDeployment := newKubectlDeployment(d.Kubectl)
+		repositories := helmDeployment.getHelmRepositories()
+		genericSecrets := kubectlDeployment.getKubectlGenericSecrets()
+		dockerRegistrySecrets := kubectlDeployment.getKubectlDockerRegistrySecrets()
+		cha := helmDeployment.getHelmCharts()
+		man := kubectlDeployment.getKubectlManifests()
+		for _, r := range repositories {
+			if _, ok := repoMap[r.hash()]; !ok {
+				repoMap[r.hash()] = r
+				preInstallers = append(preInstallers, repoMap[r.hash()])
+			}
+		}
+		for _, s := range genericSecrets {
+			hashedSecret := s.hash()
+			if val, ok := gsecretMap[hashedSecret]; ok {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
+				gsecretMap[hashedSecret] = val
+			} else {
+				gsecretMap[hashedSecret] = s
+			}
+		}
+		for _, s := range dockerRegistrySecrets {
+			hashedSecret := s.hash()
+			if val, ok := dsecretMap[hashedSecret]; ok {
+				val.Namespaces = append(val.Namespaces, s.Namespace)
+				dsecretMap[hashedSecret] = val
+			} else {
+				dsecretMap[hashedSecret] = s
+			}
+		}
+		for _, c := range cha {
+			if _, ok := chartMap[c.hash()]; !ok {
+				chartMap[c.hash()] = c
+				postInstallers = append(postInstallers, c)
+			}
+		}
+		for _, m := range man {
+			if _, ok := manifestMap[m.hash()]; !ok {
+				manifestMap[m.hash()] = m
+				postInstallers = append(postInstallers, m)
+			}
 		}
 	}
-	for _, v := range repos {
-		installers = append(installers, v)
+	for _, v := range gsecretMap {
+		preInstallers = append(preInstallers, v)
 	}
+	for _, v := range dsecretMap {
+		preInstallers = append(preInstallers, v)
+	}
+	installers = append(installers, preInstallers...)
+	installers = append(installers, postInstallers...)
 	return installers
 }
 

@@ -32,18 +32,6 @@ func containsAny[T comparable](list []T, any ...T) bool {
 	return false
 }
 
-// exists is used to determine whether a file or directory already exists
-func exists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
-}
-
 // captureStdout is used to captureStdout from another function and return it
 // in a string; this is useful for testing
 func captureStdout(f func()) string {
