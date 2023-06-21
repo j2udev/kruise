@@ -113,7 +113,9 @@ func getAllPassedInstallers(args []string) Installers {
 		for _, s := range genericSecrets {
 			hashedSecret := s.hash()
 			if val, ok := gsecretMap[hashedSecret]; ok {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
+				if !contains[string](val.Namespaces, s.Namespace) {
+					val.Namespaces = append(val.Namespaces, s.Namespace)
+				}
 				gsecretMap[hashedSecret] = val
 			} else {
 				gsecretMap[hashedSecret] = s
@@ -122,7 +124,9 @@ func getAllPassedInstallers(args []string) Installers {
 		for _, s := range dockerRegistrySecrets {
 			hashedSecret := s.hash()
 			if val, ok := dsecretMap[hashedSecret]; ok {
-				val.Namespaces = append(val.Namespaces, s.Namespace)
+				if !contains[string](val.Namespaces, s.Namespace) {
+					val.Namespaces = append(val.Namespaces, s.Namespace)
+				}
 				dsecretMap[hashedSecret] = val
 			} else {
 				dsecretMap[hashedSecret] = s
