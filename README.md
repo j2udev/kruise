@@ -1,4 +1,4 @@
-# Kruise(ctl)
+# Kruise
 
 [![Build Status](https://github.com/j2udev/kruise/workflows/build/badge.svg?branch=master)](https://github.com/j2udev/kruise/actions?query=workflow%3Abuild+branch%3Amaster)
 [![GoReportCard](https://goreportcard.com/badge/github.com/j2udev/kruise)](https://goreportcard.com/report/github.com/j2udev/kruise)
